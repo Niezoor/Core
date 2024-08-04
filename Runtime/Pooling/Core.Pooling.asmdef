@@ -1,0 +1,16 @@
+{
+    "name": "Core.Pooling",
+    "rootNamespace": "Core.Pooling",
+    "references": [
+        "Core.Utilities"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

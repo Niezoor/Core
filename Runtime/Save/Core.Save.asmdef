@@ -1,0 +1,16 @@
+{
+    "name": "Core.Save",
+    "rootNamespace": "Core.Save",
+    "references": [
+        "Core.Utilities"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,0 +1,17 @@
+{
+    "name": "Core.UI",
+    "rootNamespace": "Core.UI",
+    "references": [
+        "Core.Pooling",
+        "Core.Utilities"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
