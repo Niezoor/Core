@@ -22,29 +22,20 @@ namespace Core.Utilities.Data
             if (!instance.Items.Contains(item))
             {
                 instance.Items.Add(item);
-                if (item is ISaveId saveId)
-                {
-                    AssignSaveId(saveId);
-                    EditorUtility.SetDirty(item);
-                }
+            }
+
+            if (item is ISaveId saveId)
+            {
+                instance.AssignSaveIdInternal(item, saveId);
             }
         }
 
-        private static void AssignSaveId(ISaveId saveId)
+        public static void UnregisterItem(T item)
         {
-            int highestId = 0;
-            foreach (var item in instance.Items)
-            {
-                if (item is ISaveId otherSaveId)
-                {
-                    if (otherSaveId.SaveId > highestId)
-                    {
-                        highestId = otherSaveId.SaveId;
-                    }
-                }
-            }
-
-            saveId.SaveId = highestId + 1;
+            Debug.Log($"Unregister item {item}", item);
+            FindInstance();
+            if (instance == null) return;
+            instance.Items.Remove(item);
         }
 
         private static void FindInstance()
@@ -65,6 +56,46 @@ namespace Core.Utilities.Data
 
             var path = AssetDatabase.GUIDToAssetPath(guids[0]);
             instance = AssetDatabase.LoadAssetAtPath<ScriptableDataBase<T>>(path);
+        }
+
+        private void AssignSaveIdInternal(T item, ISaveId saveId)
+        {
+            int highestId = 0;
+            foreach (var otherItem in instance.Items)
+            {
+                if (otherItem == item || otherItem is not ISaveId otherSaveId) continue;
+                if (otherSaveId.SaveId > highestId)
+                {
+                    highestId = otherSaveId.SaveId;
+                }
+
+                if (otherSaveId.SaveId == saveId.SaveId)
+                {
+                    saveId.SaveId = 0;
+                }
+            }
+
+            if (saveId.SaveId == 0)
+            {
+                saveId.SaveId = highestId + 1;
+                Debug.Log($"Assign item {saveId} save id:{saveId.SaveId}");
+            }
+        }
+
+        [Button]
+        private void AssignSaveId()
+        {
+            foreach (var item in Items)
+            {
+                if (item == null) continue;
+                if (item is ISaveId saveId && saveId.SaveId == 0)
+                {
+                    AssignSaveIdInternal(item, saveId);
+                    EditorUtility.SetDirty(item);
+                }
+            }
+
+            AssetDatabase.SaveAssets();
         }
 #endif
     }
