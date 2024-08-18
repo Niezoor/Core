@@ -1,45 +1,67 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Pool;
 
 namespace Core.Pooling
 {
-    public abstract class PoolInstance<T> where T : Object
+    public abstract class PoolInstance
     {
-        public readonly T Prefab;
-        public readonly HashSet<T> Active;
-        public readonly ObjectPool<T> ObjectPool;
         public readonly Transform Parent;
         public readonly bool IsParentSet;
+        public int ActiveCount;
+        public int InactiveCount;
+#if UNITY_EDITOR
+        private readonly bool isOwnParentCreated = false;
+#endif
 
-        public PoolInstance(T prefab, int cap, Transform parent = null)
+        public virtual void Dispose()
         {
-            this.Prefab = prefab;
+#if UNITY_EDITOR
+            if (!isOwnParentCreated) return;
+            if (Application.isPlaying)
+            {
+                Object.Destroy(Parent.gameObject);
+            }
+            else
+            {
+                Object.DestroyImmediate(Parent.gameObject);
+            }
+#endif
+        }
+
+        public PoolInstance(Transform parent, string name)
+        {
             Parent = parent;
             IsParentSet = parent != null;
 #if UNITY_EDITOR
-            if (!IsParentSet)
-            {
-                var gameObject = new GameObject(prefab.name + " pool");
-                Parent = gameObject.transform;
-                IsParentSet = true;
-            }
+            if (IsParentSet) return;
+            var gameObject = new GameObject(name);
+            Parent = gameObject.transform;
+            isOwnParentCreated = true;
+            IsParentSet = true;
 #endif
-            Active = new(cap);
-            ObjectPool = new ObjectPool<T>(Create, Get, Release, Destroy, false, cap);
+        }
+    }
+
+    public abstract class PoolInstance<T> : PoolInstance where T : Object
+    {
+        public readonly T Prefab;
+        public readonly HashSet<T> Active;
+        public readonly List<T> Inactive;
+
+        public PoolInstance(T prefab, int cap, Transform parent = null) : base(parent, prefab.name + " pool")
+        {
+            this.Prefab = prefab;
+            Active = new HashSet<T>(cap);
+            Inactive = new List<T>(cap);
         }
 
         public void Preload(int amount)
         {
-            var instances = new List<T>(amount);
             for (int i = 0; i < amount; i++)
             {
-                instances.Add(ObjectPool.Get());
-            }
-
-            foreach (var instance in instances)
-            {
-                ObjectPool.Release(instance);
+                var obj = CreateInstance(false);
+                InactiveCount++;
+                Inactive.Add(obj);
             }
         }
 
@@ -51,12 +73,12 @@ namespace Core.Pooling
 
         public void Despawn(T obj)
         {
-            ObjectPool.Release(obj);
+            Release(obj);
         }
 
         public void DespawnAll()
         {
-            var currentActive = new HashSet<T>(Active);
+            var currentActive = new List<T>(Active);
             foreach (var poolable in currentActive)
             {
                 Despawn(poolable);
@@ -65,20 +87,60 @@ namespace Core.Pooling
             Active.Clear();
         }
 
-        protected abstract T Create();
-        protected abstract void Get(T instance);
+        protected abstract T CreateInstance(bool active);
         protected abstract void Release(T instance);
+
         protected abstract void Destroy(T instance);
 
-        public void Dispose()
+        protected T Create()
         {
-            var currentActive = new HashSet<T>(Active);
-            foreach (var poolable in currentActive)
+            var obj = CreateInstance(true);
+            ActiveCount++;
+            Active.Add(obj);
+            return obj;
+        }
+
+        protected T GetFromPool()
+        {
+            T obj;
+            if (InactiveCount > 0)
             {
-                Despawn(poolable);
+                InactiveCount--;
+                obj = Inactive[InactiveCount];
+                Inactive.RemoveAt(InactiveCount);
+                Active.Add(obj);
+                ActiveCount++;
+                return obj;
             }
 
-            ObjectPool.Dispose();
+            return Create();
+        }
+
+        protected void PushToPool(T instance)
+        {
+            InactiveCount++;
+            Inactive.Add(instance);
+            ActiveCount--;
+            Active.Remove(instance);
+        }
+
+        public override void Dispose()
+        {
+            foreach (var instance in Active)
+            {
+                Destroy(instance);
+            }
+
+            foreach (var instance in Inactive)
+            {
+                Destroy(instance);
+            }
+
+            Active.Clear();
+            Inactive.Clear();
+            ActiveCount = 0;
+            InactiveCount = 0;
+            base.Dispose();
         }
     }
 }

@@ -29,7 +29,7 @@ namespace Core.UI
                 return;
             }
 
-            panelPrefab.Load(1, screens[panelPrefab.Layer].transform);
+            panelPrefab.Preload(1, screens[panelPrefab.Layer].transform);
             var panelInstance = panelPrefab.Spawn(screens[panelPrefab.Layer].transform);
             panelInstance.IsInstance = true;
             panelInstance.Prefab = panelPrefab;

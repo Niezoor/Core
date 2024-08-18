@@ -7,92 +7,73 @@ namespace Core.Pooling
         public ComponentPool(Component origin, int cap, Transform parent = null) : base(origin, cap, parent)
         {
         }
-        
+
         public override Component Spawn()
         {
-            var Instance = ObjectPool.Get();
-            Instance.gameObject.SetActive(true);
-            return Instance;
+            var instance = GetFromPool();
+            instance.gameObject.SetActive(true);
+            return instance;
         }
 
         public override Component Spawn(Transform parent)
         {
-            var Instance = ObjectPool.Get();
-            Instance.transform.SetParent(parent, false);
-            Instance.gameObject.SetActive(true);
-            return Instance;
+            var instance = GetFromPool();
+            instance.transform.SetParent(parent, false);
+            instance.gameObject.SetActive(true);
+            return instance;
         }
 
         public override Component Spawn(Vector3 position)
         {
-            var Instance = ObjectPool.Get();
-            Instance.transform.position = position;
-            Instance.gameObject.SetActive(true);
-            return Instance;
+            var instance = GetFromPool();
+            instance.transform.position = position;
+            instance.gameObject.SetActive(true);
+            return instance;
         }
 
         public override Component Spawn(Vector3 position, Quaternion rotation)
         {
-            var Instance = ObjectPool.Get();
-            Instance.transform.SetPositionAndRotation(position, rotation);
-            Instance.gameObject.SetActive(true);
-            return Instance;
+            var instance = GetFromPool();
+            instance.transform.SetPositionAndRotation(position, rotation);
+            instance.gameObject.SetActive(true);
+            return instance;
         }
 
         public override Component Spawn(Vector3 position, Quaternion rotation, Transform parent)
         {
-            var Instance = ObjectPool.Get();
-            Instance.transform.SetParent(parent, false);
-            Instance.transform.SetPositionAndRotation(position, rotation);
-            Instance.gameObject.SetActive(true);
-            return Instance;
-        }
-
-        protected override Component Create()
-        {
-            var instance = IsParentSet ? Object.Instantiate(Prefab, Parent) : Object.Instantiate(Prefab);
-            instance.gameObject.SetActive(false);
+            var instance = GetFromPool();
+            instance.transform.SetParent(parent, false);
+            instance.transform.SetPositionAndRotation(position, rotation);
+            instance.gameObject.SetActive(true);
             return instance;
         }
 
-        protected override void Get(Component instance)
+        protected override Component CreateInstance(bool active)
         {
-            Active.Add(instance);
+            var instance = IsParentSet ? Object.Instantiate(Prefab, Parent) : Object.Instantiate(Prefab);
+            instance.gameObject.SetActive(active);
+            return instance;
         }
 
         protected override void Release(Component instance)
         {
-            if (instance == null)
-            {
-                return;
-            }
-
-            if (IsParentSet)
-            {
-                instance.transform.SetParent(Parent, false);
-            }
-
-            Active.Remove(instance);
+            if (instance == null) return;
+            if (IsParentSet) instance.transform.SetParent(Parent, false);
             instance.gameObject.SetActive(false);
+            PushToPool(instance);
         }
 
         protected override void Destroy(Component instance)
         {
+            if (instance == null) return;
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                if (instance != null)
-                {
-                    Object.DestroyImmediate(instance.gameObject);
-                }
-
+                Object.DestroyImmediate(instance.gameObject);
                 return;
             }
 #endif
-            if (instance != null)
-            {
-                Object.Destroy(instance.gameObject);
-            }
+            Object.Destroy(instance.gameObject);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace Core.Pooling
         private static GameObject gameObject;
         private static Component component;
 
-        public static void Load(this GameObject prefab, int amount = 0, Transform parent = null)
+        public static void Preload(this GameObject prefab, int amount = 0, Transform parent = null)
         {
             if (!GameObjectPools.ContainsKey(prefab))
             {
@@ -92,7 +92,7 @@ namespace Core.Pooling
             }
         }
 
-        public static void Load<T>(this T prefab, int amount = 0, Transform parent = null) where T : Component
+        public static void Preload<T>(this T prefab, int amount = 0, Transform parent = null) where T : Component
         {
             if (!ComponentPools.ContainsKey(prefab))
             {

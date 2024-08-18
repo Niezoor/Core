@@ -1,15 +1,20 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using Lean.Pool;
 using UnityEditor;
 using UnityEngine;
-using Debug = UnityEngine.Debug;
 
 namespace Core.Pooling.Editor
 {
     public class PoolDebugWindow : EditorWindow
     {
+        [SerializeField] private int performanceTestsAmount = 1000;
         private Vector2 scrollPos;
-        private static int _performanceTestsAmount = 1000;
+        private string currentTestsResult;
+
+        private static int PerformanceTestsAmount { get; set; }
 
         [MenuItem("Tools/Pool/Debug Window test")]
         private static void ShowWindow()
@@ -31,14 +36,7 @@ namespace Core.Pooling.Editor
                 var pool = Pool.GameObjectPools[poolKey];
                 GUILayout.BeginVertical("BOX");
                 EditorGUILayout.ObjectField(pool.Prefab, typeof(GameObject), false);
-                var objPool = pool.ObjectPool;
-                GUILayout.Label(
-                    $"Instances: active:{objPool.CountActive} inactive:{objPool.CountInactive} all:{objPool.CountAll}");
-                if (GUILayout.Button("Dispose"))
-                {
-                    pool.Dispose();
-                }
-
+                ShowPoolInspector(pool);
                 GUILayout.EndVertical();
             }
 
@@ -53,20 +51,7 @@ namespace Core.Pooling.Editor
                 GUILayout.BeginVertical("BOX");
                 GUI.enabled = false;
                 EditorGUILayout.ObjectField(pool.Prefab, typeof(MonoBehaviour), false);
-                if (pool.IsParentSet)
-                {
-                    EditorGUILayout.ObjectField("Parent", pool.Parent, typeof(Transform), true);
-                }
-
-                GUI.enabled = true;
-                var objPool = pool.ObjectPool;
-                GUILayout.Label(
-                    $"Instances: active:{objPool.CountActive} inactive:{objPool.CountInactive} all:{objPool.CountAll}");
-                if (GUILayout.Button("Dispose"))
-                {
-                    pool.Dispose();
-                }
-
+                ShowPoolInspector(pool);
                 GUILayout.EndVertical();
             }
 
@@ -75,17 +60,40 @@ namespace Core.Pooling.Editor
             if (!Application.isPlaying)
             {
                 GUILayout.BeginHorizontal();
-                _performanceTestsAmount = EditorGUILayout.IntField("Performance tests amount", _performanceTestsAmount);
+                performanceTestsAmount = EditorGUILayout.IntField("Performance tests amount", performanceTestsAmount);
+                PerformanceTestsAmount = performanceTestsAmount;
                 if (GUILayout.Button("Start"))
                 {
-                    StartGameObjectPoolTest();
-                    StartComponentPoolTest();
+                    currentTestsResult = String.Empty;
+                    currentTestsResult += StartPoolTest();
+                    currentTestsResult += StartInstantiateDestroyTest();
+                    currentTestsResult += StartLeanPoolTest();
                 }
 
                 GUILayout.EndHorizontal();
+                var numLines = currentTestsResult.Split('\n').Length;
+                EditorGUILayout.LabelField(currentTestsResult,
+                    GUILayout.Height(EditorGUIUtility.singleLineHeight * numLines));
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private void ShowPoolInspector(PoolInstance pool)
+        {
+            GUI.enabled = false;
+            if (pool.IsParentSet)
+            {
+                EditorGUILayout.ObjectField("Parent", pool.Parent, typeof(Transform), true);
+            }
+
+            GUI.enabled = true;
+            GUILayout.Label(
+                $"Instances: active:{pool.ActiveCount} inactive:{pool.InactiveCount} all:{pool.ActiveCount + pool.InactiveCount}");
+            if (GUILayout.Button("Dispose"))
+            {
+                pool.Dispose();
+            }
         }
 
         private void Update()
@@ -93,59 +101,179 @@ namespace Core.Pooling.Editor
             Repaint();
         }
 
-        private void StartGameObjectPoolTest()
+        public delegate void PreloadAction<T>(T prefab, int amount);
+
+        public delegate T SpawnAction<T>(T prefab);
+
+        public delegate void DespawnAction<T>(T instance);
+
+        public static string PerformanceTest<T>(
+            T prefab,
+            PreloadAction<T> prelaod,
+            SpawnAction<T> spawn,
+            DespawnAction<T> despawn,
+            DespawnAction<T> dispose)
         {
-            var instances = new GameObject[_performanceTestsAmount];
-            var timer = Stopwatch.StartNew();
-            var prefab = new GameObject("GameObjectPoolTest");
-            prefab.Load(_performanceTestsAmount);
-            Debug.Log($"{_performanceTestsAmount} GameObjects preload takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            for (int i = 0; i < _performanceTestsAmount; i++)
+            var instances = new List<T>(PerformanceTestsAmount);
+            var preloadTimer = Stopwatch.StartNew();
+            prelaod.Invoke(prefab, PerformanceTestsAmount);
+            preloadTimer.Stop();
+            var spawnTimer = Stopwatch.StartNew();
+            for (int i = 0; i < PerformanceTestsAmount; i++)
             {
-                instances[i] = prefab.Spawn();
+                instances.Add(spawn.Invoke(prefab));
             }
 
-            Debug.Log($"{_performanceTestsAmount} GameObjects spawn takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            for (int i = 0; i < _performanceTestsAmount; i++)
+            spawnTimer.Stop();
+            var despawnTimer = Stopwatch.StartNew();
+            for (var i = 0; i < PerformanceTestsAmount; i++)
             {
-                instances[i].Despawn();
+                despawn.Invoke(instances[i]);
             }
 
-            Debug.Log($"{_performanceTestsAmount} GameObjects despawn takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            prefab.Dispose();
-            Debug.Log($"{_performanceTestsAmount} GameObjects dispose takes:{timer.ElapsedMilliseconds}ms");
-            DestroyImmediate(prefab);
+            despawnTimer.Stop();
+            var disposeTimer = Stopwatch.StartNew();
+            dispose.Invoke(prefab);
+            disposeTimer.Stop();
+            return
+                $"Preload:{preloadTimer.ElapsedMilliseconds}ms\t Spawn:{spawnTimer.ElapsedMilliseconds}ms\t Despawn:{despawnTimer.ElapsedMilliseconds}ms\t Dispose:{disposeTimer.ElapsedMilliseconds}ms\n";
         }
 
-        private void StartComponentPoolTest()
+        public static string PerformanceGameObjectTest(
+            PreloadAction<GameObject> prelaod,
+            SpawnAction<GameObject> spawn,
+            DespawnAction<GameObject> despawn,
+            DespawnAction<GameObject> dispose)
         {
-            var instances = new SpriteRenderer[_performanceTestsAmount];
-            var timer = Stopwatch.StartNew();
+            var prefab = new GameObject("GameObjectPoolTest");
+            var result = "GameObject pool test:\n";
+            try
+            {
+                result += PerformanceTest(prefab, prelaod, spawn, despawn, dispose);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                result += e.Message;
+            }
+
+            DestroyImmediate(prefab);
+            return result;
+        }
+
+        public static string PerformanceComponentTest(
+            PreloadAction<SpriteRenderer> prelaod,
+            SpawnAction<SpriteRenderer> spawn,
+            DespawnAction<SpriteRenderer> despawn,
+            DespawnAction<SpriteRenderer> dispose)
+        {
             var prefab = new GameObject("ComponentPoolTest");
             var component = prefab.AddComponent<SpriteRenderer>();
-            component.Load(_performanceTestsAmount);
-            Debug.Log($"{_performanceTestsAmount} Component preload takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            for (int i = 0; i < _performanceTestsAmount; i++)
+            var result = "Component pool test:\n";
+            try
             {
-                instances[i] = component.Spawn();
+                result += PerformanceTest(component, prelaod, spawn, despawn, dispose);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                result += e.Message;
             }
 
-            Debug.Log($"{_performanceTestsAmount} Component spawn takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            for (int i = 0; i < _performanceTestsAmount; i++)
-            {
-                instances[i].Despawn();
-            }
-
-            Debug.Log($"{_performanceTestsAmount} Component despawn takes:{timer.ElapsedMilliseconds}ms");
-            timer = Stopwatch.StartNew();
-            component.Dispose();
-            Debug.Log($"{_performanceTestsAmount} Component dispose takes:{timer.ElapsedMilliseconds}ms");
             DestroyImmediate(prefab);
+            return result;
+        }
+
+
+        private string StartPoolTest()
+        {
+            var result = PerformanceGameObjectTest(
+                (p, amount) => { p.Preload(amount); },
+                (p) => p.Spawn(),
+                (obj) => { obj.Despawn(); },
+                (p) => p.Dispose());
+            result += PerformanceComponentTest(
+                (p, amount) => { p.Preload(amount); },
+                (p) => p.Spawn(),
+                (obj) => { obj.Despawn(); },
+                (p) => p.Dispose());
+            return $"Core pool test:\n{result}";
+        }
+
+        private string StartInstantiateDestroyTest()
+        {
+            var result = PerformanceGameObjectTest(
+                (p, amount) => { },
+                Instantiate,
+                (obj) =>
+                {
+                    if (Application.isPlaying) Destroy(obj);
+                    else DestroyImmediate(obj);
+                },
+                (p) => { });
+            result += PerformanceComponentTest(
+                (p, amount) => { },
+                Instantiate,
+                (obj) =>
+                {
+                    if (Application.isPlaying) Destroy(obj.gameObject);
+                    else DestroyImmediate(obj.gameObject);
+                },
+                (p) => { });
+            return $"Instantiate and Destroy test:\n{result}";
+        }
+
+        private string StartLeanPoolTest()
+        {
+            var result = PerformanceGameObjectTest(
+                (p, amount) =>
+                {
+                    var obj = LeanPool.Spawn(p);
+                    LeanPool.Despawn(obj);
+                    var pool = default(LeanGameObjectPool);
+                    if (LeanGameObjectPool.TryFindPoolByPrefab(p, ref pool) == true)
+                    {
+                        pool.Notification = LeanGameObjectPool.NotificationType.None;
+                        pool.Preload = PerformanceTestsAmount;
+                        pool.PreloadAll();
+                    }
+                },
+                LeanPool.Spawn,
+                (obj) => { LeanPool.Despawn(obj); },
+                (p) =>
+                {
+                    var pool = default(LeanGameObjectPool);
+                    if (LeanGameObjectPool.TryFindPoolByPrefab(p, ref pool) == true)
+                    {
+                        pool.Clean();
+                        DestroyImmediate(pool.gameObject);
+                    }
+                });
+            result += PerformanceComponentTest(
+                (p, amount) =>
+                {
+                    var obj = LeanPool.Spawn(p);
+                    LeanPool.Despawn(obj);
+                    var pool = default(LeanGameObjectPool);
+                    if (LeanGameObjectPool.TryFindPoolByPrefab(p.gameObject, ref pool) == true)
+                    {
+                        pool.Notification = LeanGameObjectPool.NotificationType.None;
+                        pool.Preload = PerformanceTestsAmount;
+                        pool.PreloadAll();
+                    }
+                },
+                LeanPool.Spawn,
+                (obj) => { LeanPool.Despawn(obj); },
+                (p) =>
+                {
+                    var pool = default(LeanGameObjectPool);
+                    if (LeanGameObjectPool.TryFindPoolByPrefab(p.gameObject, ref pool) == true)
+                    {
+                        pool.Clean();
+                        DestroyImmediate(pool.gameObject);
+                    }
+                });
+            return $"Lean Pool:\n{result}";
         }
     }
 }

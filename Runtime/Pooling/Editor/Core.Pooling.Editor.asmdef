@@ -1,8 +1,9 @@
 {
     "name": "Core.Pooling.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "Core.Pooling.Editor",
     "references": [
-        "GUID:fb6c690e4a7dcdc4eb1df539d84d244a"
+        "Core.Pooling",
+        "LeanPool"
     ],
     "includePlatforms": [
         "Editor"
