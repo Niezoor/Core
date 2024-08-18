@@ -7,61 +7,43 @@ using UnityEditor;
 
 namespace Core.Utilities.Data
 {
-    public class ScriptableDataBase<T> : ScriptableObject where T : ScriptableObject
+    public abstract class ScriptableDataBase : ScriptableObject
+    {
+        public abstract void RegisterItem(ScriptableObject item);
+        public abstract void UnregisterItem(ScriptableObject item);
+    }
+
+    public abstract class ScriptableDataBase<T> : ScriptableDataBase where T : ScriptableObject
     {
         [InlineEditor()]
         public List<T> Items;
 
 #if UNITY_EDITOR
-        private static ScriptableDataBase<T> instance;
-
-        public static void RegisterItem(T item)
+        public override void RegisterItem(ScriptableObject item)
         {
-            FindInstance();
-            if (instance == null) return;
-            if (!instance.Items.Contains(item))
-            {
-                instance.Items.Add(item);
-            }
-
+            var target = item as T;
+            if (Items.Contains(target)) return;
+            Items.Add((T)item);
+            EditorUtility.SetDirty(this);
             if (item is ISaveId saveId)
             {
-                instance.AssignSaveIdInternal(item, saveId);
+                AssignSaveId(target, saveId);
             }
+
+            AssetDatabase.SaveAssets();
         }
 
-        public static void UnregisterItem(T item)
+        public override void UnregisterItem(ScriptableObject item)
         {
-            Debug.Log($"Unregister item {item}", item);
-            FindInstance();
-            if (instance == null) return;
-            instance.Items.Remove(item);
+            Items.Remove((T)item);
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
         }
 
-        private static void FindInstance()
-        {
-            if (instance != null) return;
-            var guids = AssetDatabase.FindAssets($"t:{typeof(ScriptableDataBase<T>).Name}");
-            if (guids.Length > 1)
-            {
-                Debug.LogWarning(
-                    $"Multiple instances of {typeof(ScriptableDataBase<T>).Name} found in project. It may cause unexpected results");
-            }
-            else if (guids.Length == 0)
-            {
-                Debug.LogWarning(
-                    $"{typeof(ScriptableDataBase<T>).Name} not found. Please create it to register items.");
-                return;
-            }
-
-            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            instance = AssetDatabase.LoadAssetAtPath<ScriptableDataBase<T>>(path);
-        }
-
-        private void AssignSaveIdInternal(T item, ISaveId saveId)
+        private void AssignSaveId(T item, ISaveId saveId)
         {
             int highestId = 0;
-            foreach (var otherItem in instance.Items)
+            foreach (var otherItem in Items)
             {
                 if (otherItem == item || otherItem is not ISaveId otherSaveId) continue;
                 if (otherSaveId.SaveId > highestId)
@@ -79,6 +61,7 @@ namespace Core.Utilities.Data
             {
                 saveId.SaveId = highestId + 1;
                 Debug.Log($"Assign item {saveId} save id:{saveId.SaveId}");
+                EditorUtility.SetDirty(item);
             }
         }
 
@@ -90,8 +73,7 @@ namespace Core.Utilities.Data
                 if (item == null) continue;
                 if (item is ISaveId saveId && saveId.SaveId == 0)
                 {
-                    AssignSaveIdInternal(item, saveId);
-                    EditorUtility.SetDirty(item);
+                    AssignSaveId(item, saveId);
                 }
             }
 
