@@ -2,8 +2,7 @@
     "name": "Core.Pooling.Editor",
     "rootNamespace": "Core.Pooling.Editor",
     "references": [
-        "Core.Pooling",
-        "LeanPool"
+        "Core.Pooling"
     ],
     "includePlatforms": [
         "Editor"

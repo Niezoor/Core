@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using Lean.Pool;
 using UnityEditor;
 using UnityEngine;
 
@@ -67,7 +66,7 @@ namespace Core.Pooling.Editor
                     currentTestsResult = String.Empty;
                     currentTestsResult += StartPoolTest();
                     currentTestsResult += StartInstantiateDestroyTest();
-                    currentTestsResult += StartLeanPoolTest();
+                    /*currentTestsResult += StartLeanPoolTest();*/
                 }
 
                 GUILayout.EndHorizontal();
@@ -223,7 +222,7 @@ namespace Core.Pooling.Editor
             return $"Instantiate and Destroy test:\n{result}";
         }
 
-        private string StartLeanPoolTest()
+        /*private string StartLeanPoolTest()
         {
             var result = PerformanceGameObjectTest(
                 (p, amount) =>
@@ -274,6 +273,6 @@ namespace Core.Pooling.Editor
                     }
                 });
             return $"Lean Pool:\n{result}";
-        }
+        }*/
     }
 }

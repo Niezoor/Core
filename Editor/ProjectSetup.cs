@@ -43,7 +43,6 @@ namespace Core.Editor
             Assets.ImportAsset("Stompy Robot LTD/ScriptingGUI/SRDebugger - Console Tools On-Device.unitypackage");
             Assets.ImportAsset("yasirkula/Editor ExtensionsUtilities/Asset Usage Detector.unitypackage");
             Assets.ImportAsset("Demigiant/Editor ExtensionsAnimation/DOTween HOTween v2.unitypackage");
-            Assets.ImportAsset("Carlos Wilkes/Editor ExtensionsSystem/Lean Pool.unitypackage");
         }
 
         [MenuItem("Core/Project Setup/Install Packages")]
