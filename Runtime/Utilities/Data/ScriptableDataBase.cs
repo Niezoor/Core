@@ -9,8 +9,10 @@ namespace Core.Utilities.Data
 {
     public abstract class ScriptableDataBase : ScriptableObject
     {
+#if UNITY_EDITOR
         public abstract void RegisterItem(ScriptableObject item);
         public abstract void UnregisterItem(ScriptableObject item);
+#endif
     }
 
     public abstract class ScriptableDataBase<T> : ScriptableDataBase where T : ScriptableObject

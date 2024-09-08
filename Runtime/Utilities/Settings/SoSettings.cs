@@ -1,0 +1,107 @@
+﻿using System.IO;
+using System.Reflection;
+using Sirenix.OdinInspector;
+using UnityEngine;
+using UnityEngine.AddressableAssets;
+#if UNITY_EDITOR
+using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Settings;
+using UnityEditor;
+#endif
+
+namespace Core.Utilities.Settings
+{
+    [HideMonoScript]
+    public class SoSettings<T> : ScriptableObject where T : SoSettings<T>
+    {
+        protected static T instance;
+
+        public static T Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    GetOrCreateDefault();
+                }
+
+                return instance;
+            }
+        }
+
+        public static bool HasInstance => instance != null;
+
+        protected virtual void OnEnable()
+        {
+            if (instance == null)
+            {
+                instance = (T)this;
+            }
+        }
+
+        private static void GetOrCreateDefault()
+        {
+            LoadFromAddressable();
+            if (instance == null)
+            {
+                CreateDefault();
+            }
+        }
+
+        private static void LoadFromAddressable()
+        {
+            var handle = Addressables.LoadAssetAsync<T>(typeof(T).Name);
+            if (handle.IsValid())
+            {
+                instance = handle.WaitForCompletion();
+            }
+        }
+
+#if UNITY_EDITOR
+        private static string GetPath()
+        {
+            var type = typeof(T);
+            var attribute = (SettingsPathAttribute)type.GetCustomAttribute(typeof(SettingsPathAttribute));
+            var path = attribute != null ? attribute.Path : "Assets/Settings/";
+            return Path.Combine(path, ObjectNames.NicifyVariableName(type.Name) + ".asset");
+        }
+#endif
+
+        private static void CreateDefault()
+        {
+            var type = typeof(T);
+            instance = CreateInstance<T>();
+#if UNITY_EDITOR
+            var path = GetPath();
+            instance.name = $"{ObjectNames.NicifyVariableName(type.Name)}";
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            AssetDatabase.CreateAsset(instance, path);
+            Debug.Log($"Create default settings:{type.Name}", instance);
+            AssetDatabase.SaveAssets();
+            SaveAsAddressable();
+#endif
+        }
+
+#if UNITY_EDITOR
+        private static void SaveAsAddressable()
+        {
+            if (instance == null) return;
+            var name = typeof(T).Name;
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            settings.AddLabel(name);
+            var group = settings.FindGroup("Settings");
+            group ??= settings.CreateGroup("Settings", false, true, false, settings.DefaultGroup.Schemas);
+            var guid = AssetDatabase.AssetPathToGUID(GetPath());
+            var entry = settings.CreateOrMoveEntry(guid, group);
+            entry.labels.Add(name);
+            settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
+            AssetDatabase.SaveAssets();
+        }
+
+        protected static SoSettingsProvider<T> GetDefaultSettings(string settingsName)
+        {
+            return new SoSettingsProvider<T>(Instance, settingsName);
+        }
+#endif
+    }
+}

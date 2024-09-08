@@ -53,5 +53,11 @@ namespace Core.UI
             animator.enabled = true;
             animator.SetTrigger(CloseTrigger);
         }
+
+        // Animation Event function
+        private void OnCloseTransitionFinish()
+        {
+            UIManager.Instance.DespawnPanel(this);
+        }
     }
 }

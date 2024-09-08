@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace Core.Utilities
@@ -12,7 +13,7 @@ namespace Core.Utilities
     {
 #if UNITY_EDITOR
 #endif
-        public Color Color = Color.white;
+        [FormerlySerializedAs("color")] public Color Color = Color.white;
     }
 
 #if UNITY_EDITOR

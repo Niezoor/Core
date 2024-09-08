@@ -8,6 +8,7 @@ namespace Core.Utilities.Optimization
     public class TimeCache : Singleton<TimeCache>
     {
         [ShowInInspector, ReadOnly] public static float DeltaTime;
+        [ShowInInspector, ReadOnly] public static float FixedDeltaTime;
         [ShowInInspector, ReadOnly] public static float Time;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -19,6 +20,7 @@ namespace Core.Utilities.Optimization
         private void Start()
         {
             DeltaTime = UnityEngine.Time.deltaTime;
+            FixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
             Time = UnityEngine.Time.time;
         }
 
@@ -26,6 +28,11 @@ namespace Core.Utilities.Optimization
         {
             Time = 0;
             DeltaTime = 0;
+        }
+
+        private void FixedUpdate()
+        {
+            FixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
         }
 
         private void Update()

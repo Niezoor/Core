@@ -1,11 +1,13 @@
 ﻿using System;
 using Sirenix.OdinInspector;
-using UnityEditor;
-using UnityEditor.AddressableAssets;
-using UnityEditor.Callbacks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditor.AddressableAssets;
+using UnityEditor.Callbacks;
+#endif
 
 namespace Core.Utilities
 {
