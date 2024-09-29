@@ -1,17 +1,15 @@
-﻿using System;
-using Sirenix.OdinInspector;
+﻿using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.SceneManagement;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.AddressableAssets;
-using UnityEditor.Callbacks;
 #endif
 
 namespace Core.Utilities
 {
-    [CreateAssetMenu(fileName = "SceneRef", menuName = "Utilities/SceneRef")]
+    [CreateAssetMenu(fileName = "SceneRef", menuName = "Core/Utilities/SceneRef")]
     public class SceneRef : ScriptableObject, ISerializationCallbackReceiver
     {
 #if UNITY_EDITOR
@@ -19,9 +17,51 @@ namespace Core.Utilities
 #endif
         [SerializeField, ReadOnly] private string scenePath;
 
-        [ReadOnly] public bool IsAddressable;
+        [ShowInInspector] public bool IsAddressable { get; private set; }
+        public string ScenePath => scenePath;
 
-        public string ScenePath
+        public void LoadScene()
+        {
+            if (IsAddressable)
+            {
+                Addressables.LoadSceneAsync(ScenePath);
+            }
+            else
+            {
+                SceneManager.LoadScene(ScenePath);
+            }
+        }
+
+        public void OnBeforeSerialize()
+        {
+#if UNITY_EDITOR
+            UpdateData();
+#endif
+        }
+
+        public void OnAfterDeserialize()
+        {
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            UpdateData();
+        }
+#endif
+
+        private void UpdateData()
+        {
+            if (sceneAsset == null) return;
+            scenePath = AssetDatabase.GetAssetPath(sceneAsset);
+            if (string.IsNullOrEmpty(scenePath)) return;
+            var settings = AddressableAssetSettingsDefaultObject.Settings;
+            if (settings == null) return;
+            var entry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(scenePath), true);
+            IsAddressable = entry != null;
+        }
+
+        /*public string ScenePath
         {
             get
             {
@@ -146,6 +186,6 @@ namespace Core.Utilities
                 }
             }
         }
-#endif
+#endif*/
     }
 }

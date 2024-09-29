@@ -8,7 +8,7 @@ using Object = UnityEngine.Object;
 
 namespace Core.Utilities
 {
-    [CreateAssetMenu]
+    [CreateAssetMenu(fileName = "Color", menuName = "Core/Utilities/Color SO")]
     public class ColorSo : ScriptableObject
     {
 #if UNITY_EDITOR
