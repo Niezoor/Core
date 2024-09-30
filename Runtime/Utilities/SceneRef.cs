@@ -48,8 +48,7 @@ namespace Core.Utilities
         {
             UpdateData();
         }
-#endif
-
+        
         private void UpdateData()
         {
             if (sceneAsset == null) return;
@@ -60,6 +59,7 @@ namespace Core.Utilities
             var entry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(scenePath), true);
             IsAddressable = entry != null;
         }
+#endif
 
         /*public string ScenePath
         {

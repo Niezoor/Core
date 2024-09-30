@@ -11,7 +11,7 @@ namespace Core.Pooling.Editor
     {
         [SerializeField] private int performanceTestsAmount = 1000;
         private Vector2 scrollPos;
-        private string currentTestsResult;
+        private string currentTestsResult = string.Empty;
 
         private static int PerformanceTestsAmount { get; set; }
 
@@ -65,6 +65,7 @@ namespace Core.Pooling.Editor
                 {
                     currentTestsResult = String.Empty;
                     currentTestsResult += StartPoolTest();
+                    currentTestsResult += "\n";
                     currentTestsResult += StartInstantiateDestroyTest();
                     /*currentTestsResult += StartLeanPoolTest();*/
                 }
@@ -145,7 +146,7 @@ namespace Core.Pooling.Editor
             DespawnAction<GameObject> dispose)
         {
             var prefab = new GameObject("GameObjectPoolTest");
-            var result = "GameObject pool test:\n";
+            var result = "GameObject test: ";
             try
             {
                 result += PerformanceTest(prefab, prelaod, spawn, despawn, dispose);
@@ -168,7 +169,7 @@ namespace Core.Pooling.Editor
         {
             var prefab = new GameObject("ComponentPoolTest");
             var component = prefab.AddComponent<SpriteRenderer>();
-            var result = "Component pool test:\n";
+            var result = "Component test:  ";
             try
             {
                 result += PerformanceTest(component, prelaod, spawn, despawn, dispose);

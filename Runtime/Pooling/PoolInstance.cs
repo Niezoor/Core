@@ -16,7 +16,7 @@ namespace Core.Pooling
         public virtual void Dispose()
         {
 #if UNITY_EDITOR
-            if (!isOwnParentCreated) return;
+            if (Parent == null) return;
             if (Application.isPlaying)
             {
                 Object.Destroy(Parent.gameObject);
