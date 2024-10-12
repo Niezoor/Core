@@ -94,7 +94,7 @@ namespace Core.Pooling
 
         protected T Create()
         {
-            var obj = CreateInstance(true);
+            var obj = CreateInstance(false);
             ActiveCount++;
             Active.Add(obj);
             return obj;
