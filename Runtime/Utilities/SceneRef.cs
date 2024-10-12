@@ -16,13 +16,13 @@ namespace Core.Utilities
         [SerializeField] private SceneAsset sceneAsset;
 #endif
         [SerializeField, ReadOnly] private string scenePath;
+        [SerializeField] private bool isAddressable;
 
-        [ShowInInspector] public bool IsAddressable { get; private set; }
         public string ScenePath => scenePath;
 
         public void LoadScene()
         {
-            if (IsAddressable)
+            if (isAddressable)
             {
                 Addressables.LoadSceneAsync(ScenePath);
             }
@@ -48,7 +48,7 @@ namespace Core.Utilities
         {
             UpdateData();
         }
-        
+
         private void UpdateData()
         {
             if (sceneAsset == null) return;
@@ -57,7 +57,7 @@ namespace Core.Utilities
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null) return;
             var entry = settings.FindAssetEntry(AssetDatabase.AssetPathToGUID(scenePath), true);
-            IsAddressable = entry != null;
+            isAddressable = entry != null;
         }
 #endif
 
