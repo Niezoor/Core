@@ -54,10 +54,29 @@ namespace Core.Utilities.Settings
             if (handle.IsValid())
             {
                 instance = handle.WaitForCompletion();
+                Debug.Log($"Load settings {instance}");
+#if UNITY_EDITOR
+                ResetOnPlayModeChange();
+#endif
             }
         }
 
 #if UNITY_EDITOR
+        private static void ResetOnPlayModeChange()
+        {
+            EditorApplication.playModeStateChanged -= OnPlayModeChange;
+            EditorApplication.playModeStateChanged += OnPlayModeChange;
+        }
+
+        private static void OnPlayModeChange(PlayModeStateChange change)
+        {
+            if (change == PlayModeStateChange.EnteredPlayMode ||
+                change == PlayModeStateChange.EnteredEditMode)
+            {
+                instance = null;
+            }
+        }
+
         private static string GetPath()
         {
             var type = typeof(T);
