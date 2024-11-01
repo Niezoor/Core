@@ -10,18 +10,18 @@ namespace Core.Utilities.Data
     public abstract class ScriptableDataBase : ScriptableObject
     {
 #if UNITY_EDITOR
-        public abstract void RegisterItem(ScriptableObject item);
-        public abstract void UnregisterItem(ScriptableObject item);
+        public abstract void RegisterItem(Object item);
+        public abstract void UnregisterItem(Object item);
 #endif
     }
 
-    public abstract class ScriptableDataBase<T> : ScriptableDataBase where T : ScriptableObject
+    public abstract class ScriptableDataBase<T> : ScriptableDataBase where T : Object
     {
         [InlineEditor()]
         public List<T> Items;
 
 #if UNITY_EDITOR
-        public override void RegisterItem(ScriptableObject item)
+        public override void RegisterItem(Object item)
         {
             var target = item as T;
             if (Items.Contains(target)) return;
@@ -35,7 +35,7 @@ namespace Core.Utilities.Data
             AssetDatabase.SaveAssets();
         }
 
-        public override void UnregisterItem(ScriptableObject item)
+        public override void UnregisterItem(Object item)
         {
             Items.Remove((T)item);
             EditorUtility.SetDirty(this);
