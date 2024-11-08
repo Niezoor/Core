@@ -1,0 +1,18 @@
+﻿using UnityEditor;
+using UnityEngine;
+
+namespace Core.Editor
+{
+    public static class Finder
+    {
+        public static T FindAsset<T>(string name) where T : Object
+        {
+            var guids = AssetDatabase.FindAssets($"t:{typeof(T)} {name}");
+            if (guids.Length == 0) return null;
+            var path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var asset = AssetDatabase.LoadAssetAtPath<T>(path);
+            Debug.Log($"AssetDatabase.FindAssets(\"t:{typeof(T)} {name}\")={asset} (total:{guids.Length})", asset);
+            return asset;
+        }
+    }
+}
