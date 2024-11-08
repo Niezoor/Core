@@ -11,10 +11,10 @@ namespace Core.Pooling
     public static class Pool
     {
         public static readonly Dictionary<GameObject, GameObjectPool> GameObjectPools = new(64);
-        public static readonly Dictionary<GameObject, ComponentPool> ComponentPools = new(256);
+        public static readonly Dictionary<GameObject, ComponentPool> ComponentPools = new(64);
 
         private static readonly Dictionary<GameObject, ComponentPool> ComponentLinks = new(256);
-        private static readonly Dictionary<GameObject, GameObjectPool> GameObjectLinks = new(64);
+        private static readonly Dictionary<GameObject, GameObjectPool> GameObjectLinks = new(256);
         private static GameObject gameObject;
         private static Component component;
 
