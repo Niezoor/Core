@@ -26,8 +26,8 @@ namespace Core.Pooling
 
         private void Update()
         {
-            duration -= TimeCache.DeltaTime;
-            if (duration <= 0)
+            currentDuration -= TimeCache.DeltaTime;
+            if (currentDuration <= 0)
             {
                 gameObject.Despawn();
             }

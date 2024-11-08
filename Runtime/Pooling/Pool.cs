@@ -11,7 +11,7 @@ namespace Core.Pooling
     public static class Pool
     {
         public static readonly Dictionary<GameObject, GameObjectPool> GameObjectPools = new(64);
-        public static readonly Dictionary<Component, ComponentPool> ComponentPools = new(256);
+        public static readonly Dictionary<GameObject, ComponentPool> ComponentPools = new(256);
 
         private static readonly Dictionary<GameObject, ComponentPool> ComponentLinks = new(256);
         private static readonly Dictionary<GameObject, GameObjectPool> GameObjectLinks = new(64);
@@ -73,6 +73,10 @@ namespace Core.Pooling
                 //GameObjectLinks.Remove(instance);
                 gameObjectPool.Despawn(instance);
             }
+            else if (ComponentLinks.TryGetValue(instance, out var pool))
+            {
+                pool.Despawn(instance.GetComponent(pool.Prefab.GetType()));
+            }
             else
             {
                 //Object.Destroy(instance);
@@ -84,19 +88,28 @@ namespace Core.Pooling
         {
             if (GameObjectPools.TryGetValue(prefab, out var gameObjectPool))
             {
-                foreach (var gameObject in gameObjectPool.Active)
-                {
-                    GameObjectLinks.Remove(gameObject);
-                }
-
-                gameObjectPool.Dispose();
-                GameObjectPools.Remove(prefab);
+                Dispose(gameObjectPool);
             }
+            else if (ComponentPools.TryGetValue(prefab, out var pool))
+            {
+                Dispose(pool);
+            }
+        }
+
+        private static void Dispose(GameObjectPool pool)
+        {
+            foreach (var gameObject in pool.Active)
+            {
+                GameObjectLinks.Remove(gameObject);
+            }
+
+            pool.Dispose();
+            GameObjectPools.Remove(pool.Prefab);
         }
 
         public static void Preload<T>(this T prefab, int amount = 0, Transform parent = null) where T : Component
         {
-            if (!ComponentPools.ContainsKey(prefab))
+            if (!ComponentPools.ContainsKey(prefab.gameObject))
             {
                 AddMonoPool(prefab, amount, parent);
             }
@@ -174,7 +187,7 @@ namespace Core.Pooling
 
         public static void DespawnAll<T>(this T prefab) where T : Component
         {
-            if (ComponentPools.TryGetValue(prefab, out var componentPool))
+            if (ComponentPools.TryGetValue(prefab.gameObject, out var componentPool))
             {
                 componentPool.DespawnAll();
             }
@@ -182,16 +195,21 @@ namespace Core.Pooling
 
         public static void Dispose<T>(this T prefab) where T : Component
         {
-            if (ComponentPools.TryGetValue(prefab, out var componentPool))
+            if (ComponentPools.TryGetValue(prefab.gameObject, out var componentPool))
             {
-                foreach (var monoBehaviour in componentPool.Active)
-                {
-                    ComponentLinks.Remove(monoBehaviour.gameObject);
-                }
-
-                componentPool.Dispose();
-                ComponentPools.Remove(prefab);
+                Dispose(componentPool);
             }
+        }
+
+        private static void Dispose(ComponentPool pool)
+        {
+            foreach (var monoBehaviour in pool.Active)
+            {
+                ComponentLinks.Remove(monoBehaviour.gameObject);
+            }
+
+            pool.Dispose();
+            ComponentPools.Remove(pool.Prefab.gameObject);
         }
 
         private static GameObjectPool FindOrAddGameObjectPool(GameObject prefab)
@@ -215,7 +233,7 @@ namespace Core.Pooling
 
         private static ComponentPool FindOrAddMonoPool(Component prefab)
         {
-            return ComponentPools.TryGetValue(prefab, out var componentPool)
+            return ComponentPools.TryGetValue(prefab.gameObject, out var componentPool)
                 ? componentPool
                 : AddMonoPool(prefab, 0, null);
         }
@@ -223,7 +241,7 @@ namespace Core.Pooling
         private static ComponentPool AddMonoPool(Component prefab, int preload, Transform parent)
         {
             var componentPool = new ComponentPool(prefab, Mathf.Min(preload, 10), parent);
-            ComponentPools.Add(prefab, componentPool);
+            ComponentPools.Add(prefab.gameObject, componentPool);
             if (preload > 0)
             {
                 componentPool.Preload(preload);
