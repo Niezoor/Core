@@ -7,7 +7,7 @@ namespace Core.Utilities
         public static T1 GetOrCreateDefault<T1>(bool dontDestroy = true, HideFlags flags = HideFlags.None)
             where T1 : MonoBehaviour
         {
-            var instance = FindObjectOfType<T1>();
+            var instance = FindFirstObjectByType<T1>();
             if (instance != null) return instance;
             var obj = new GameObject
             {
