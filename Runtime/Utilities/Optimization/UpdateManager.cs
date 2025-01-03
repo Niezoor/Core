@@ -6,8 +6,8 @@ namespace Core.Utilities.Optimization
     [DefaultExecutionOrder(-2999)] //After TimeCache
     public class UpdateManager : Singleton<UpdateManager>
     {
-        public static Action OnUpdate = () => { };
-        public static Action OnFixedUpdate = () => { };
+        public Action OnUpdate = () => { };
+        public Action OnFixedUpdate = () => { };
 
         private void Update()
         {
