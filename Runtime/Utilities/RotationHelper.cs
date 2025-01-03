@@ -15,5 +15,10 @@ namespace Core.Utilities
         {
             return transform.rotation * Vector3.forward;
         }
+        
+        public static Vector3 ToDirection(this Quaternion rotation, Vector3 direction)
+        {
+            return rotation * direction;
+        }
     }
 }
