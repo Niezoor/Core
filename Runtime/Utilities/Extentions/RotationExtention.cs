@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Core.Utilities
 {
-    public static class RotationHelper
+    public static class RotationExtention
     {
         public static Quaternion DirectionToRotation2d(Vector2 direction)
         {
@@ -16,9 +16,9 @@ namespace Core.Utilities
             return transform.rotation * Vector3.forward;
         }
         
-        public static Vector3 ToDirection(this Quaternion rotation, Vector3 direction)
+        public static Vector3 ToDirection(this Quaternion rotation, Vector3 axis)
         {
-            return rotation * direction;
+            return rotation * axis;
         }
     }
 }

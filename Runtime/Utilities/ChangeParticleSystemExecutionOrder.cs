@@ -6,7 +6,7 @@ using static UnityEngine.PlayerLoop.PreLateUpdate;
 
 namespace Core.Utilities
 {
-    public class ChangePlayerLoop : MonoBehaviour
+    public class ChangeParticleSystemExecutionOrder : MonoBehaviour
     {
         public bool defaultLoop = true;
 
