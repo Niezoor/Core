@@ -29,26 +29,26 @@ namespace Core.Save
             }
             else if (version > ClassVersion)
             {
-                MainStorage.TriggerUnsupportedSave();
+                Core.Save.Save.TriggerUnsupportedSave();
             }
         }
 
         [Button]
         public void Save()
         {
-            MainStorage.Set(Key, JsonUtility.ToJson(this));
+            Core.Save.Save.Set(Key, JsonUtility.ToJson(this));
         }
 
         [Button]
         public void Load()
         {
-            JsonUtility.FromJsonOverwrite(MainStorage.Get(Key), this);
+            JsonUtility.FromJsonOverwrite(Core.Save.Save.Get(Key), this);
         }
 
         public void SaveAndSync()
         {
             Save();
-            MainStorage.Sync();
+            Core.Save.Save.Sync();
         }
     }
 }

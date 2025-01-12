@@ -31,7 +31,7 @@ namespace Core.Save.Storages
         public override void Clear(Action onClear)
         {
             File.Delete(Path);
-            Data.data = new();
+            Data.Data = new();
             TriggerOnCleared();
             onClear?.Invoke();
         }

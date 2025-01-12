@@ -15,28 +15,28 @@ namespace Core.Save.Storages
         public bool IsLoaded { get; private set; } = false;
         public bool HasError { get; private set; } = false;
         public string ErrorMessage { get; private set; }
-        [ShowInInspector] public readonly StorageData Data = new();
+        [ShowInInspector] public readonly PlayerSaveData Data = new();
         public abstract void Load(Action onLoad);
 
         public void Set(string key, string value)
         {
-            Data.data[key] = value;
+            Data.Data[key] = value;
         }
 
         public string Get(string key)
         {
-            return Data.data.TryGetValue(key, out var value) ? value : string.Empty;
+            return Data.Data.TryGetValue(key, out var value) ? value : string.Empty;
         }
 
         public bool Remove(string key)
         {
-            return Data.data.Remove(key);
+            return Data.Data.Remove(key);
         }
 
         public void Sync(long playTimeTicks, string desc, Action onSync)
         {
-            Data.playTimeTicks = playTimeTicks;
-            Data.description = desc;
+            Data.PlayTimeTicks = playTimeTicks;
+            Data.Description = desc;
             Sync(onSync);
         }
 

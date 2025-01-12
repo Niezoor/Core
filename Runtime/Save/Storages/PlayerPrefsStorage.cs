@@ -22,7 +22,7 @@ namespace Core.Save.Storages
         public override void Clear(Action onClear)
         {
             PlayerPrefs.DeleteKey("save");
-            Data.data = new();
+            Data.Data = new();
             TriggerOnCleared();
             onClear?.Invoke();
         }

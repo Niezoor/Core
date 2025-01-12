@@ -19,15 +19,15 @@ namespace Core.Save.Tests
         private void TestJson()
         {
             Profiler.BeginSample("Test Json");
-            if (!MainStorage.IsLoaded) return;
+            if (!Save.IsLoaded) return;
             Profiler.BeginSample("Test Json set");
-            MainStorage.Set("test", JsonUtility.ToJson(this));
+            Save.Set("test", JsonUtility.ToJson(this));
             Profiler.EndSample();
             Profiler.BeginSample("Test Json get");
-            JsonUtility.FromJsonOverwrite(MainStorage.Get("test"), this);
+            JsonUtility.FromJsonOverwrite(Save.Get("test"), this);
             Profiler.EndSample();
             Profiler.BeginSample("Test Json remove");
-            MainStorage.Remove("test");
+            Save.Remove("test");
             Profiler.EndSample();
             Profiler.EndSample();
         }
@@ -36,15 +36,15 @@ namespace Core.Save.Tests
         private void TestWriteRead()
         {
             Profiler.BeginSample("Test WriteRead");
-            if (!MainStorage.IsLoaded) return;
+            if (!Save.IsLoaded) return;
             Profiler.BeginSample("Test WriteRead set");
-            MainStorage.Set("test", value);
+            Save.Set("test", value);
             Profiler.EndSample();
             Profiler.BeginSample("Test WriteRead get");
-            value = MainStorage.Get("test");
+            value = Save.Get("test");
             Profiler.EndSample();
             Profiler.BeginSample("Test WriteRead remove");
-            MainStorage.Remove("test");
+            Save.Remove("test");
             Profiler.EndSample();
             Profiler.EndSample();
         }
@@ -53,7 +53,7 @@ namespace Core.Save.Tests
         private void TestPlayerPrefs()
         {
             Profiler.BeginSample("Test PlayerPrefs");
-            if (!MainStorage.IsLoaded) return;
+            if (!Save.IsLoaded) return;
             Profiler.BeginSample("Test PlayerPrefs set");
             PlayerPrefs.SetString("test", value);
             Profiler.EndSample();

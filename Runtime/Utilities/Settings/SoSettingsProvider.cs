@@ -14,7 +14,7 @@ namespace Core.Utilities.Settings
 
         private SerializedObject SerializedSettings => serializedSettings ??= new SerializedObject(settings);
 
-        public SoSettingsProvider(T instance, string settingsName) : base($"Project/Game/{settingsName}",
+        public SoSettingsProvider(T instance, string settingsName) : base($"Project/Core/{settingsName}",
             SettingsScope.Project)
         {
             settings = instance;
