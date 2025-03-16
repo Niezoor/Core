@@ -253,7 +253,6 @@ namespace Core.Pooling
         static Pool()
         {
 #if UNITY_EDITOR
-            EditorApplication.playModeStateChanged += EditorApplicationOnplayModeStateChanged;
             EditorSceneManager.sceneClosing += DisposeAllPools;
 #endif
             SceneManager.sceneUnloaded += s => DisposeAllPools(s, false);
@@ -263,16 +262,6 @@ namespace Core.Pooling
         {
             DisposeAll();
         }
-
-#if UNITY_EDITOR
-        private static void EditorApplicationOnplayModeStateChanged(PlayModeStateChange obPlayModeStateChange)
-        {
-            if (obPlayModeStateChange == PlayModeStateChange.ExitingPlayMode)
-            {
-                DisposeAll();
-            }
-        }
-#endif
 
 #if UNITY_EDITOR
         [MenuItem("Tools/Pool/Dispose all pools")]

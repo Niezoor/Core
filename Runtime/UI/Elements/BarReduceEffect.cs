@@ -27,7 +27,6 @@ namespace Core.UI.Elements
 
         private void OnDestroy()
         {
-            delayTween?.Kill();
         }
 
         private void UpdateValue()

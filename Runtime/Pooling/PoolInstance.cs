@@ -9,9 +9,6 @@ namespace Core.Pooling
         public readonly bool IsParentSet;
         public int ActiveCount;
         public int InactiveCount;
-#if UNITY_EDITOR
-        private readonly bool isOwnParentCreated = false;
-#endif
 
         public virtual void Dispose()
         {
@@ -36,7 +33,6 @@ namespace Core.Pooling
             if (IsParentSet) return;
             var gameObject = new GameObject(name);
             Parent = gameObject.transform;
-            isOwnParentCreated = true;
             IsParentSet = true;
 #endif
         }

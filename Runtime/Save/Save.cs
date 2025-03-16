@@ -61,7 +61,7 @@ namespace Core.Save
 
         private void Update()
         {
-            playTime += TimeCache.DeltaTime;
+            playTime += TimeCache.deltaTime;
         }
 
         public static void Set(string key, string value)

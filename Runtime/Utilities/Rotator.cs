@@ -16,7 +16,7 @@ namespace Core.Utilities
 
         private void Update()
         {
-            t.Rotate(Speed * TimeCache.DeltaTime);
+            t.Rotate(Speed * TimeCache.deltaTime);
         }
     }
 }

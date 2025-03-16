@@ -33,7 +33,7 @@ namespace Core.Utilities
             }
         }
 
-        protected void OnDestroy()
+        protected virtual void OnDestroy()
         {
             if (Instance == this)
             {

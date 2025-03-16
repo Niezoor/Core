@@ -7,9 +7,9 @@ namespace Core.Utilities.Optimization
     [DefaultExecutionOrder(-3000)]
     public class TimeCache : Singleton<TimeCache>
     {
-        [ShowInInspector, ReadOnly] public static float DeltaTime;
-        [ShowInInspector, ReadOnly] public static float FixedDeltaTime;
-        [ShowInInspector, ReadOnly] public static float Time;
+        [ShowInInspector, ReadOnly] public static float deltaTime;
+        [ShowInInspector, ReadOnly] public static float fixedDeltaTime;
+        [ShowInInspector, ReadOnly] public static float time;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Initialize()
@@ -19,26 +19,26 @@ namespace Core.Utilities.Optimization
 
         private void Start()
         {
-            DeltaTime = UnityEngine.Time.deltaTime;
-            FixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
-            Time = UnityEngine.Time.time;
+            deltaTime = UnityEngine.Time.deltaTime;
+            fixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
+            time = UnityEngine.Time.time;
         }
 
         private void OnDestroy()
         {
-            Time = 0;
-            DeltaTime = 0;
+            time = 0;
+            deltaTime = 0;
         }
 
         private void FixedUpdate()
         {
-            FixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
+            fixedDeltaTime = UnityEngine.Time.fixedDeltaTime;
         }
 
         private void Update()
         {
-            DeltaTime = UnityEngine.Time.deltaTime;
-            Time = UnityEngine.Time.time;
+            deltaTime = UnityEngine.Time.deltaTime;
+            time = UnityEngine.Time.time;
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
 #endif
