@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Core.Utilities
+namespace Core.Utilities.Extentions
 {
     public static class VectorExtension
     {
@@ -30,6 +30,13 @@ namespace Core.Utilities
             float num1 = a.x - b.x;
             float num2 = a.y - b.y;
             return (float)((double)num1 * (double)num1 + (double)num2 * (double)num2);
+        }
+
+        public static Vector2 Rotate(this Vector2 v, float degrees)
+        {
+            return new Vector2(
+                v.x * Mathf.Cos(degrees * Mathf.Deg2Rad) - v.y * Mathf.Sin(degrees * Mathf.Deg2Rad),
+                v.x * Mathf.Sin(degrees * Mathf.Deg2Rad) + v.y * Mathf.Cos(degrees * Mathf.Deg2Rad));
         }
     }
 }
