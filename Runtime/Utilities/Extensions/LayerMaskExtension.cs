@@ -1,7 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace Core.Utilities
+namespace Core.Utilities.Extensions
 {
     public static class LayerMaskExtension
     {

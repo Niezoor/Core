@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace Core.Utilities.Extentions
+namespace Core.Utilities.Extensions
 {
     public static class VectorExtension
     {
