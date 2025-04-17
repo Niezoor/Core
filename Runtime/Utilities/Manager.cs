@@ -5,22 +5,22 @@ using UnityEngine;
 
 namespace Core.Utilities
 {
-    public class Manager<T> : SingletonPrefab<Manager<T>> where T : Component
+    public class Manager<T1, T2> : Singleton<T1> where T1 : MonoBehaviour
     {
-        public Action<T> OnRegistered;
-        public Action<T> OnUnregistered;
+        public Action<T2> OnRegistered;
+        public Action<T2> OnUnregistered;
 
-        [ShowInInspector] public readonly HashSet<T> Registered = new();
+        [ShowInInspector] public readonly HashSet<T2> Registered = new();
         public int Count { get; private set; }
 
-        public virtual void Register(T component)
+        public virtual void Register(T2 component)
         {
             Registered.Add(component);
             Count++;
             OnRegistered?.Invoke(component);
         }
 
-        public virtual void Unregister(T component)
+        public virtual void Unregister(T2 component)
         {
             Registered.Remove(component);
             Count--;

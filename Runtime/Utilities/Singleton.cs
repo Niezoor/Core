@@ -24,10 +24,11 @@ namespace Core.Utilities
 #endif
                 DontDestroyOnLoad(obj);
             }
+
             return instance;
         }
     }
-    
+
     [DefaultExecutionOrder(-1000)]
     public class Singleton<T> : Singleton where T : MonoBehaviour
     {
