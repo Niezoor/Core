@@ -27,6 +27,7 @@ namespace Core.UI.Elements
 
         private void OnDestroy()
         {
+            bar.OnChangeValue -= UpdateValue;
         }
 
         private void UpdateValue()
@@ -34,7 +35,7 @@ namespace Core.UI.Elements
             if (bar.Value < reduceFillImage.fillAmount)
             {
                 if (delayTween != null) return;
-                delayTween = DOVirtual.DelayedCall(delay, UpdateAnimated, false);
+                delayTween = DOVirtual.DelayedCall(delay, UpdateAnimated, false).OnKill(() => { delayTween = null; });
             }
             else
             {
