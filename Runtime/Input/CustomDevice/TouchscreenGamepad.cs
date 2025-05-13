@@ -1,10 +1,11 @@
-﻿using System.Numerics;
-using UnityEditor;
+﻿using UnityEditor;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.Layouts;
 using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Utilities;
+using Vector2 = System.Numerics.Vector2;
 
 namespace Core.Input.CustomDevice
 {
@@ -17,7 +18,7 @@ namespace Core.Input.CustomDevice
 
         [InputControl(displayName = "Stick 2", layout = "Stick", usage = "Secondary2DMotion")]
         public Vector2 Stick2;
-        
+
         [InputControl(displayName = "Button 1", layout = "Button", usages = new[] { "PrimaryAction", "Submit" })]
         public bool Button1;
     }
@@ -38,6 +39,10 @@ namespace Core.Input.CustomDevice
         {
             InputSystem.RegisterLayout<TouchscreenGamepad>();
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void InitializeInPlayer()
+        { }
 
         public void OnUpdate()
         { }
