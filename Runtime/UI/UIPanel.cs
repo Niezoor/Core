@@ -19,7 +19,7 @@ namespace Core.UI
         [NonSerialized] public UIPanel Prefab;
         [NonSerialized] public bool IsInstance = false;
 
-        public bool IsOpened => IsInstance || Instance != null;
+        [ShowInInspector, ReadOnly] public bool IsOpened => IsInstance || Instance != null;
         public UIScreenLayer Layer => layer;
 
 #if UNITY_EDITOR
@@ -33,22 +33,36 @@ namespace Core.UI
         private void OnEnable()
         {
             canvasGroup.blocksRaycasts = true;
+            UIManager.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            UIManager.Unregister(this);
         }
 
         [Button]
         public void Open()
         {
+            Debug.Log($"Opening UI Panel {this}", this);
             UIManager.Instance.OpenPanel(this);
         }
 
         [Button]
         public void Close()
         {
-            UIManager.Instance.ClosePanel(this);
+            Debug.Log($"Closing UI Panel {this}", this);
+            UIManager.ClosePanel(this);
         }
 
         public void PlayCloseTransition()
         {
+            if (animator.runtimeAnimatorController == null)
+            {
+                OnCloseTransitionFinish();
+                return;
+            }
+
             canvasGroup.blocksRaycasts = false;
             animator.enabled = true;
             animator.SetTrigger(CloseTrigger);
@@ -57,7 +71,7 @@ namespace Core.UI
         // Animation Event function
         private void OnCloseTransitionFinish()
         {
-            UIManager.Instance.DespawnPanel(this);
+            UIManager.DespawnPanel(this);
         }
     }
 }

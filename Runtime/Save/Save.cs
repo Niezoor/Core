@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Core.Save
 {
+    //[ExecuteAlways]
     public class Save : Singleton<Save>
     {
         public static Action OnLoaded;
@@ -39,10 +40,10 @@ namespace Core.Save
             switch (SaveSettings.Instance.LocalStorageType.Value)
             {
                 case StorageType.FileStorage:
-                    Storage = Instance.gameObject.AddComponent<FileStorage>();
+                    Storage = gameObject.AddComponent<FileStorage>();
                     break;
                 case StorageType.PlayerPrefsStorage:
-                    Storage = Instance.gameObject.AddComponent<PlayerPrefsStorage>();
+                    Storage = gameObject.AddComponent<PlayerPrefsStorage>();
                     break;
                 default:
                     Debug.Log($"Storage not supported {SaveSettings.Instance.LocalStorageType.Value}");
@@ -59,6 +60,16 @@ namespace Core.Save
             Storage.Load(null);
         }
 
+        [Button]
+        private void GetOrCreateDefaultSave()
+        {
+            var any = Resources.FindObjectsOfTypeAll<Save>();
+            foreach (var save in any)
+            {
+                Debug.Log($"found save {save} ({save.hideFlags})", save);
+            }
+        }
+
         private void Update()
         {
             playTime += TimeCache.deltaTime;
@@ -72,12 +83,12 @@ namespace Core.Save
 
         public static string Get(string key)
         {
-            return Instance.Storage.Get(key);
+            return Instance?.Storage?.Get(key);
         }
 
         public static bool Remove(string key)
         {
-            return Instance.Storage.Remove(key);
+            return Instance != null && Instance.Storage != null && Instance.Storage.Remove(key);
         }
 
         [Button]

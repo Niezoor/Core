@@ -19,8 +19,9 @@ namespace Core.Utilities.Optimization
             OnFixedUpdate.Invoke();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             OnUpdate = () => { };
             OnFixedUpdate = () => { };
         }

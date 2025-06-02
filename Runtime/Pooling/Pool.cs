@@ -125,7 +125,7 @@ namespace Core.Pooling
 
         public static T Spawn<T>(this T prefab, Transform parent) where T : Component
         {
-            var componentPool = FindOrAddMonoPool(prefab);
+            var componentPool = FindOrAddMonoPool(prefab, parent);
             component = componentPool.Spawn(parent);
             ComponentLinks.TryAdd(component.gameObject, componentPool);
             return (T)component;
@@ -231,11 +231,11 @@ namespace Core.Pooling
             return gameObjectPool;
         }
 
-        private static ComponentPool FindOrAddMonoPool(Component prefab)
+        private static ComponentPool FindOrAddMonoPool(Component prefab, Transform parent = null)
         {
             return ComponentPools.TryGetValue(prefab.gameObject, out var componentPool)
                 ? componentPool
-                : AddMonoPool(prefab, 0, null);
+                : AddMonoPool(prefab, 0, parent);
         }
 
         private static ComponentPool AddMonoPool(Component prefab, int preload, Transform parent)

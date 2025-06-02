@@ -1,8 +1,10 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Reflection;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 #if UNITY_EDITOR
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
@@ -11,6 +13,22 @@ using UnityEditor;
 
 namespace Core.Utilities.Settings
 {
+    public static class SettingsConst
+    {
+        public const string AddressableGroupName = "SoSettings";
+    }
+
+    /// <summary>
+    /// Globally accessed settings loaded from Addressable.
+    /// Getting Instance is synchronous which is not supported on web platforms.
+    /// Call LoadAsync() to load asynchronously.
+    /// Example code of creating settings provider to display settings in PlayerSettings panel:
+    /// #if UNITY_EDITOR
+    /// [SettingsProvider]
+    /// public static SettingsProvider CreateSettingsProvider() => GetDefaultSettings(settingsName);
+    /// #endif
+    /// </summary>
+    /// <typeparam name="T">Class of the settings</typeparam>
     [HideMonoScript]
     public class SoSettings<T> : ScriptableObject where T : SoSettings<T>
     {
@@ -36,6 +54,40 @@ namespace Core.Utilities.Settings
             if (instance == null)
             {
                 instance = (T)this;
+            }
+        }
+
+        public static void LoadAsync(Action onFinish = null)
+        {
+            var handle = Addressables.LoadAssetAsync<T>(typeof(T).Name);
+            if (handle.IsValid())
+            {
+                if (handle.IsDone)
+                {
+                    Debug.Log($"Asset is loaded: {typeof(T).Name}");
+                    OnLoadingFinish(handle);
+                }
+                else
+                {
+                    Debug.Log($"Asset loading async: {typeof(T).Name}");
+                    handle.Completed += OnLoadingFinish;
+                }
+            }
+            else
+            {
+                onFinish?.Invoke();
+            }
+
+            return;
+
+            void OnLoadingFinish(AsyncOperationHandle<T> handle)
+            {
+                instance = handle.Result;
+                Debug.Log($"Load settings {instance}");
+                onFinish?.Invoke();
+#if UNITY_EDITOR
+                ResetOnPlayModeChange();
+#endif
             }
         }
 
@@ -108,8 +160,8 @@ namespace Core.Utilities.Settings
             var name = typeof(T).Name;
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             settings.AddLabel(name);
-            var group = settings.FindGroup("Settings");
-            group ??= settings.CreateGroup("Settings", false, true, false, settings.DefaultGroup.Schemas);
+            var group = settings.FindGroup(SettingsConst.AddressableGroupName);
+            group ??= settings.CreateGroup(SettingsConst.AddressableGroupName, false, true, false, settings.DefaultGroup.Schemas);
             var guid = AssetDatabase.AssetPathToGUID(GetPath());
             var entry = settings.CreateOrMoveEntry(guid, group);
             entry.labels.Add(name);

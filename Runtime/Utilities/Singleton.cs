@@ -16,6 +16,7 @@ namespace Core.Utilities
                 hideFlags = flags
 #endif
             };
+            Debug.Log($"Creating new instance of {obj.name}");
             instance = obj.AddComponent<T1>();
             if (dontDestroy)
             {
@@ -54,6 +55,14 @@ namespace Core.Utilities
             if (instance == null)
             {
                 instance = GetOrCreateDefault<T>();
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (instance == this)
+            {
+                instance = null;
             }
         }
     }

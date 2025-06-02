@@ -24,8 +24,9 @@ namespace Core.Utilities.Optimization
             time = UnityEngine.Time.time;
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             time = 0;
             deltaTime = 0;
         }

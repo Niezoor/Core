@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Core.Pooling;
 using Core.Utilities;
 using Sirenix.OdinInspector;
@@ -9,6 +10,14 @@ namespace Core.UI
     public class UIManager : Singleton<UIManager>
     {
         [ShowInInspector, ReadOnly] private Dictionary<UIScreenLayer, UIScreen> screens = new();
+
+        private static readonly List<UIPanel> panels = new();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void RuntimeInitializeOnLoadMethod()
+        {
+            panels.Clear();
+        }
 
         public void RegisterScreen(UIScreen uiScreen)
         {
@@ -29,6 +38,12 @@ namespace Core.UI
                 return;
             }
 
+            if (panels.Any(p => p.Prefab == panelPrefab || p.name.Equals(panelPrefab.name)))
+            {
+                Debug.LogWarning($"Panel already opened");
+                return;
+            }
+
             panelPrefab.Preload(1, screens[panelPrefab.Layer].transform);
             var panelInstance = panelPrefab.Spawn(screens[panelPrefab.Layer].transform);
             panelInstance.IsInstance = true;
@@ -36,7 +51,7 @@ namespace Core.UI
             panelPrefab.Instance = panelInstance;
         }
 
-        public void ClosePanel(UIPanel panel)
+        public static void ClosePanel(UIPanel panel)
         {
             if (panel.Instance != null)
             {
@@ -50,7 +65,7 @@ namespace Core.UI
             }
         }
 
-        public void DespawnPanel(UIPanel panel)
+        public static void DespawnPanel(UIPanel panel)
         {
             if (panel.Instance != null)
             {
@@ -60,6 +75,17 @@ namespace Core.UI
             {
                 panel.Despawn();
             }
+        }
+
+        public static void Register(UIPanel uiPanel)
+        {
+            uiPanel.IsInstance = true;
+            panels.Add(uiPanel);
+        }
+
+        public static void Unregister(UIPanel uiPanel)
+        {
+            panels.Remove(uiPanel);
         }
     }
 }
