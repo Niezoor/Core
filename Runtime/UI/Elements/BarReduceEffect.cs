@@ -13,6 +13,7 @@ namespace Core.UI.Elements
         public Ease ease = Ease.Linear;
 
         private Tween delayTween;
+        private Tween animTween;
 
         private void Reset()
         {
@@ -28,6 +29,8 @@ namespace Core.UI.Elements
         private void OnDestroy()
         {
             bar.OnChangeValue -= UpdateValue;
+            animTween?.Kill();
+            delayTween?.Kill();
         }
 
         private void UpdateValue()
@@ -46,8 +49,8 @@ namespace Core.UI.Elements
         private void UpdateAnimated()
         {
             delayTween = null;
-            DOVirtual.Float(reduceFillImage.fillAmount, bar.Value, duration,
-                newVal => reduceFillImage.fillAmount = newVal).SetEase(ease);
+            animTween = DOVirtual.Float(reduceFillImage.fillAmount, bar.Value, duration,
+                newVal => reduceFillImage.fillAmount = newVal).SetEase(ease).OnKill(() => { animTween = null; });
         }
     }
 }
