@@ -15,7 +15,7 @@ namespace Core.Pooling.Editor
 
         private static int PerformanceTestsAmount { get; set; }
 
-        [MenuItem("Tools/Pool/Debug Window test")]
+        [MenuItem("Core/Pool/Debug Window")]
         private static void ShowWindow()
         {
             var window = GetWindow<PoolDebugWindow>();
@@ -92,7 +92,7 @@ namespace Core.Pooling.Editor
                 $"Instances: active:{pool.ActiveCount} inactive:{pool.InactiveCount} all:{pool.ActiveCount + pool.InactiveCount}");
             if (GUILayout.Button("Dispose"))
             {
-                pool.Dispose();
+                Pool.Dispose(pool);
             }
         }
 

@@ -79,8 +79,8 @@ namespace Core.Pooling
             }
             else
             {
-                //Object.Destroy(instance);
-                instance.SetActive(false);
+                Object.Destroy(instance);
+                //instance.SetActive(false);
             }
         }
 
@@ -96,7 +96,7 @@ namespace Core.Pooling
             }
         }
 
-        private static void Dispose(GameObjectPool pool)
+        public static void Dispose(GameObjectPool pool)
         {
             foreach (var gameObject in pool.Active)
             {
@@ -105,6 +105,18 @@ namespace Core.Pooling
 
             pool.Dispose();
             GameObjectPools.Remove(pool.Prefab);
+        }
+
+        public static void Dispose(PoolInstance pool)
+        {
+            if (pool is GameObjectPool gameObjectPool)
+            {
+                Dispose(gameObjectPool);
+            }
+            else if (pool is ComponentPool componentPool)
+            {
+                Dispose(componentPool);
+            }
         }
 
         public static void Preload<T>(this T prefab, int amount = 0, Transform parent = null) where T : Component
@@ -180,8 +192,8 @@ namespace Core.Pooling
             }
             else
             {
-                //Object.Destroy(instance.gameObject);
-                instance.gameObject.SetActive(false);
+                Object.Destroy(instance.gameObject);
+                //instance.gameObject.SetActive(false);
             }
         }
 
@@ -201,7 +213,7 @@ namespace Core.Pooling
             }
         }
 
-        private static void Dispose(ComponentPool pool)
+        public static void Dispose(ComponentPool pool)
         {
             foreach (var monoBehaviour in pool.Active)
             {
@@ -264,7 +276,7 @@ namespace Core.Pooling
         }
 
 #if UNITY_EDITOR
-        [MenuItem("Tools/Pool/Dispose all pools")]
+        [MenuItem("Core/Pool/Dispose all pools")]
 #endif
         public static void DisposeAll()
         {

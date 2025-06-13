@@ -7,13 +7,13 @@ namespace Core.Pooling
     {
         public readonly Transform Parent;
         public readonly bool IsParentSet;
+        public readonly bool IsPoolParent;
         public int ActiveCount;
         public int InactiveCount;
 
         public virtual void Dispose()
         {
-#if UNITY_EDITOR
-            if (Parent == null) return;
+            if (!IsPoolParent || !Parent) return;
             if (Application.isPlaying)
             {
                 Object.Destroy(Parent.gameObject);
@@ -22,18 +22,18 @@ namespace Core.Pooling
             {
                 Object.DestroyImmediate(Parent.gameObject);
             }
-#endif
         }
 
         public PoolInstance(Transform parent, string name)
         {
             Parent = parent;
-            IsParentSet = parent != null;
+            IsParentSet = parent;
 #if UNITY_EDITOR
             if (IsParentSet) return;
             var gameObject = new GameObject(name);
             Parent = gameObject.transform;
             IsParentSet = true;
+            IsPoolParent = true;
 #endif
         }
     }
