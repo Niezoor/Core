@@ -9,6 +9,7 @@ namespace Core.Utilities.Extensions
         {
             var count = list.Count;
             if (count == 0) return default;
+            if (count == 1) return list[0];
             return list[UnityEngine.Random.Range(0, list.Count)];
         }
 
