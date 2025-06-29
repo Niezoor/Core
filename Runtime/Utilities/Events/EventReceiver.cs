@@ -5,18 +5,18 @@ namespace Core.Utilities.Events
 {
     public class EventReceiver : MonoBehaviour
     {
-        [SerializeField] private SoEvent soEvent;
+        [SerializeField] private EventSo eventSo;
 
         public UnityEvent Event;
 
         private void OnEnable()
         {
-            soEvent.Event.AddListener(soEvent.Invoke);
+            eventSo.Event.AddListener(eventSo.Invoke);
         }
 
         private void OnDisable()
         {
-            soEvent.Event.RemoveListener(soEvent.Invoke);
+            eventSo.Event.RemoveListener(eventSo.Invoke);
         }
     }
 }

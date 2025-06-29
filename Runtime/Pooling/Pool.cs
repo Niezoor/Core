@@ -50,7 +50,7 @@ namespace Core.Pooling
             return gameObject;
         }
 
-        public static GameObject Spawn<T>(this GameObject prefab, Vector3 position, Quaternion rotation)
+        public static GameObject Spawn(this GameObject prefab, Vector3 position, Quaternion rotation)
         {
             var gameObjectPool = FindOrAddGameObjectPool(prefab);
             gameObject = gameObjectPool.Spawn(position, rotation);

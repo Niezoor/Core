@@ -3,8 +3,8 @@ using UnityEngine.Events;
 
 namespace Core.Utilities.Events
 {
-    [CreateAssetMenu(fileName = "SoEvent", menuName = "Core/SoEvent")]
-    public class SoEvent : ScriptableObject
+    [CreateAssetMenu(fileName = "Event", menuName = "Core/Event")]
+    public class EventSo : ScriptableObject
     {
         public UnityEvent Event;
 

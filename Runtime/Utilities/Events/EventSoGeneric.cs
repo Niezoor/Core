@@ -2,7 +2,7 @@
 
 namespace Core.Utilities.Events
 {
-    public abstract class SoEventGeneric<T> : SoEvent
+    public abstract class EventSoGeneric<T> : EventSo
     {
         public new UnityEvent<T> Event;
 
