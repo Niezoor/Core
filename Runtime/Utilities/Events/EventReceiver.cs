@@ -11,12 +11,12 @@ namespace Core.Utilities.Events
 
         private void OnEnable()
         {
-            eventSo.Event.AddListener(eventSo.Invoke);
+            eventSo.Listener.AddListener(eventSo.Invoke);
         }
 
         private void OnDisable()
         {
-            eventSo.Event.RemoveListener(eventSo.Invoke);
+            eventSo.Listener.RemoveListener(eventSo.Invoke);
         }
     }
 }

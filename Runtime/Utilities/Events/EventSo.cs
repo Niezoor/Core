@@ -6,11 +6,11 @@ namespace Core.Utilities.Events
     [CreateAssetMenu(fileName = "Event", menuName = "Core/Event")]
     public class EventSo : ScriptableObject
     {
-        public UnityEvent Event;
+        public UnityEvent Listener;
 
         public void Invoke()
         {
-            Event.Invoke();
+            Listener.Invoke();
         }
     }
 }

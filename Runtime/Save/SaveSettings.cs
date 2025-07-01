@@ -14,7 +14,7 @@ namespace Core.Save
         PlayerPrefsStorage = 1,
     }
 
-    public class SaveSettings : SoSettings<SaveSettings>
+    public class SaveSettings : SettingsSo<SaveSettings>
     {
         public PlatformSpecific<StorageType> LocalStorageType;
 

@@ -15,7 +15,7 @@ namespace Core.Utilities.Settings
 {
     public static class SettingsConst
     {
-        public const string AddressableGroupName = "SoSettings";
+        public const string AddressableGroupName = "SettingsSo";
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace Core.Utilities.Settings
     /// </summary>
     /// <typeparam name="T">Class of the settings</typeparam>
     [HideMonoScript]
-    public class SoSettings<T> : ScriptableObject where T : SoSettings<T>
+    public class SettingsSo<T> : ScriptableObject where T : SettingsSo<T>
     {
         protected static T instance;
 
@@ -169,9 +169,9 @@ namespace Core.Utilities.Settings
             AssetDatabase.SaveAssets();
         }
 
-        protected static SoSettingsProvider<T> GetDefaultSettings(string settingsName)
+        protected static SettingsSoProvider<T> GetDefaultSettings(string settingsName)
         {
-            return new SoSettingsProvider<T>(Instance, settingsName);
+            return new SettingsSoProvider<T>(Instance, settingsName);
         }
 #endif
     }

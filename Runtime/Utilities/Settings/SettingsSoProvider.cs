@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace Core.Utilities.Settings
 {
-    public class SoSettingsProvider<T> : SettingsProvider where T : SoSettings<T>
+    public class SettingsSoProvider<T> : SettingsProvider where T : SettingsSo<T>
     {
         private readonly ScriptableObject settings;
         private SerializedObject serializedSettings;
@@ -14,7 +14,7 @@ namespace Core.Utilities.Settings
 
         private SerializedObject SerializedSettings => serializedSettings ??= new SerializedObject(settings);
 
-        public SoSettingsProvider(T instance, string settingsName) : base($"Project/Core/{settingsName}",
+        public SettingsSoProvider(T instance, string settingsName) : base($"Project/Core/{settingsName}",
             SettingsScope.Project)
         {
             settings = instance;
