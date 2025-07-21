@@ -1,10 +1,11 @@
-﻿using UnityEngine.Events;
+﻿using UnityEngine;
+using UnityEngine.Events;
 
 namespace Core.Utilities.Events
 {
-    public abstract class EventSoGeneric<T> : EventSo
+    public abstract class EventSoGeneric<T> : ScriptableObject
     {
-        public new UnityEvent<T> Listener;
+        public UnityEvent<T> Listener;
 
         public void Invoke(T value)
         {
