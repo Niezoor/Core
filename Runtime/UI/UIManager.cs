@@ -53,7 +53,7 @@ namespace Core.UI
 
         public static void ClosePanel(UIPanel panel)
         {
-            if (panel.Instance != null)
+            if (panel.Instance)
             {
                 panel.Instance.Prefab = null;
                 panel.Instance.PlayCloseTransition();
