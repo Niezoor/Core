@@ -3,7 +3,9 @@
     "rootNamespace": "Core.UI",
     "references": [
         "Core.Pooling",
-        "Core.Utilities"
+        "Core.Utilities",
+        "Unity.TextMeshPro",
+        "Unity.Localization"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
