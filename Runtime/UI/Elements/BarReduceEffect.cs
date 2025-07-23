@@ -1,4 +1,6 @@
-﻿using DG.Tweening;
+﻿using System.Collections;
+using Core.Utilities.Optimization;
+using DG.Tweening;
 using UnityEngine;
 
 namespace Core.UI.Elements
@@ -14,6 +16,9 @@ namespace Core.UI.Elements
 
         private Tween delayTween;
         private Tween animTween;
+        private Coroutine coroutine;
+        private WaitForSeconds delaySeconds;
+        private readonly WaitForEndOfFrame waitForEndOfFrame = new WaitForEndOfFrame();
 
         private void Reset()
         {
@@ -22,6 +27,7 @@ namespace Core.UI.Elements
 
         private void Start()
         {
+            delaySeconds = new WaitForSeconds(delay);
             bar.OnChangeValue += UpdateValue;
             UpdateValue();
         }
@@ -37,8 +43,9 @@ namespace Core.UI.Elements
         {
             if (bar.Value < reduceFillImage.fillAmount)
             {
-                if (delayTween != null) return;
-                delayTween = DOVirtual.DelayedCall(delay, UpdateAnimated, false).OnKill(() => { delayTween = null; });
+                if (coroutine != null) StopCoroutine(coroutine);
+                coroutine = StartCoroutine(UpdateAnimatedCoroutine());
+                //delayTween = DOVirtual.DelayedCall(delay, UpdateAnimated, false).OnKill(() => { delayTween = null; });
             }
             else
             {
@@ -51,6 +58,20 @@ namespace Core.UI.Elements
             delayTween = null;
             animTween = DOVirtual.Float(reduceFillImage.fillAmount, bar.Value, duration,
                 newVal => reduceFillImage.fillAmount = newVal).SetEase(ease).OnKill(() => { animTween = null; });
+        }
+
+        private IEnumerator UpdateAnimatedCoroutine()
+        {
+            yield return delaySeconds;
+            var diff = reduceFillImage.fillAmount - bar.Value;
+            var speed = diff / duration;
+            while (reduceFillImage.fillAmount > bar.Value)
+            {
+                reduceFillImage.fillAmount -= speed * TimeCache.deltaTime;
+                yield return waitForEndOfFrame;
+            }
+
+            reduceFillImage.fillAmount = bar.Value;
         }
     }
 }
