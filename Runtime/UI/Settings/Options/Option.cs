@@ -7,7 +7,7 @@ namespace Core.UI.Settings.Options
     {
         [SerializeField] private OptionTitle optionTitle;
 
-        protected PropertyInfo PropertyInfo;
+        protected FieldInfo FieldInfo;
         protected object Obj;
 
 #if UNITY_EDITOR
@@ -17,15 +17,15 @@ namespace Core.UI.Settings.Options
         }
 #endif
 
-        public void Setup(PropertyInfo propertyInfo, object obj)
+        public void Setup(FieldInfo propertyInfo, object obj)
         {
-            PropertyInfo = propertyInfo;
+            FieldInfo = propertyInfo;
             Obj = obj;
             optionTitle.SetTitle(propertyInfo.Name);
             SetupValue(propertyInfo, obj);
         }
 
-        protected abstract void SetupValue(PropertyInfo propertyInfo, object obj);
+        protected abstract void SetupValue(FieldInfo fieldInfo, object obj);
         public abstract void PrevOption();
         public abstract void NextOption();
         public abstract void Clicked();

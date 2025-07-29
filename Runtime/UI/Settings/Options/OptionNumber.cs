@@ -19,6 +19,11 @@ namespace Core.UI.Settings.Options
         private float currentValue;
         private float prevValue;
 
+        private void OnEnable()
+        {
+            UpdateView();
+        }
+
         public override void PrevOption()
         {
             if (isFloat)
@@ -30,7 +35,7 @@ namespace Core.UI.Settings.Options
                 currentValue -= 1;
             }
 
-            PropertyInfo.SetValue(Obj, currentValue);
+            FieldInfo.SetValue(Obj, currentValue);
             UpdateView();
         }
 
@@ -45,7 +50,7 @@ namespace Core.UI.Settings.Options
                 currentValue += 1;
             }
 
-            PropertyInfo.SetValue(Obj, currentValue);
+            FieldInfo.SetValue(Obj, currentValue);
             UpdateView();
         }
 
@@ -61,41 +66,42 @@ namespace Core.UI.Settings.Options
                 currentValue = prevValue;
             }
 
-            PropertyInfo.SetValue(Obj, currentValue);
+            FieldInfo.SetValue(Obj, currentValue);
             UpdateView();
         }
 
-        protected override void SetupValue(PropertyInfo propertyInfo, object obj)
+        protected override void SetupValue(FieldInfo fieldInfo, object obj)
         {
-            if (propertyInfo.PropertyType == typeof(float))
+            if (fieldInfo.FieldType == typeof(float))
             {
                 isFloat = true;
                 slider.wholeNumbers = false;
                 textField.contentType = TMP_InputField.ContentType.DecimalNumber;
-                prevValue = currentValue = (float)propertyInfo.GetValue(obj);
+                prevValue = currentValue = (float)fieldInfo.GetValue(obj);
                 textField.onEndEdit.AddListener(ParseValueFloat);
             }
 
-            if (propertyInfo.PropertyType == typeof(int))
+            if (fieldInfo.FieldType == typeof(int))
             {
                 isFloat = false;
                 slider.wholeNumbers = true;
                 textField.contentType = TMP_InputField.ContentType.IntegerNumber;
-                prevValue = currentValue = (int)propertyInfo.GetValue(obj);
+                prevValue = currentValue = (int)fieldInfo.GetValue(obj);
                 textField.onEndEdit.AddListener(ParseValueInt);
             }
 
             UpdateView();
-            var rangeAttribute = propertyInfo.GetCustomAttribute<RangeAttribute>();
+            var rangeAttribute = fieldInfo.GetCustomAttribute<RangeAttribute>();
             if (rangeAttribute != null) SetMinMax(rangeAttribute.min, rangeAttribute.max);
             else SetUnclamped();
         }
 
         private void UpdateView()
         {
-            currentValue = (float)PropertyInfo.GetValue(Obj);
+            if (FieldInfo == null || Obj == null) return;
+            currentValue = (float)FieldInfo.GetValue(Obj);
             var valueString =
-                isFloat ? currentValue.ToString(CultureInfo.InvariantCulture) : ((int)currentValue).ToString();
+                isFloat ? currentValue.ToString(CultureInfo.CurrentCulture) : ((int)currentValue).ToString();
             text.text = valueString;
             textField.SetTextWithoutNotify(valueString);
         }
@@ -105,16 +111,21 @@ namespace Core.UI.Settings.Options
             if (int.TryParse(value, out var result))
             {
                 if (isClamped) result = Mathf.Clamp(result, Mathf.RoundToInt(minMax.x), Mathf.RoundToInt(minMax.y));
-                PropertyInfo.SetValue(Obj, result);
+                currentValue = result;
+                FieldInfo.SetValue(Obj, result);
             }
         }
 
         private void ParseValueFloat(string value)
         {
-            if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var result))
+            if (float.TryParse(value, out currentValue))
             {
-                if (isClamped) result = Mathf.Clamp(result, minMax.x, minMax.y);
-                PropertyInfo.SetValue(Obj, result);
+                if (isClamped) currentValue = Mathf.Clamp(currentValue, minMax.x, minMax.y);
+                FieldInfo.SetValue(Obj, currentValue);
+            }
+            else
+            {
+                Debug.Log($"Cannot parse float {value}");
             }
         }
 

@@ -19,11 +19,11 @@ namespace Core.UI.Settings.Options
         public override void Clicked()
         { }
 
-        protected override void SetupValue(PropertyInfo propertyInfo, object obj)
+        protected override void SetupValue(FieldInfo fieldInfo, object obj)
         {
-            textField.SetTextWithoutNotify((string)propertyInfo.GetValue(obj));
-            textField.onEndEdit.AddListener((value) => { propertyInfo.SetValue(obj, value); });
-            textField.readOnly = propertyInfo.GetCustomAttribute<ReadOnlyAttribute>() != null;
+            textField.SetTextWithoutNotify((string)fieldInfo.GetValue(obj));
+            textField.onEndEdit.AddListener((value) => { fieldInfo.SetValue(obj, value); });
+            textField.readOnly = fieldInfo.GetCustomAttribute<ReadOnlyAttribute>() != null;
         }
     }
 }

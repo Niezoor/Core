@@ -33,13 +33,13 @@ namespace Core.UI.Settings.Options
         public void Toggle()
         {
             currentValue = !currentValue;
-            PropertyInfo.SetValue(Obj, currentValue);
+            FieldInfo.SetValue(Obj, currentValue);
             UpdateView();
         }
 
-        protected override void SetupValue(PropertyInfo propertyInfo, object obj)
+        protected override void SetupValue(FieldInfo fieldInfo, object obj)
         {
-            currentValue = (bool)propertyInfo.GetValue(obj);
+            currentValue = (bool)fieldInfo.GetValue(obj);
             UpdateView();
         }
 

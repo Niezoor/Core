@@ -1,4 +1,8 @@
-﻿using UnityEngine;
+﻿using Sirenix.OdinInspector;
+using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Core.Utilities
 {
@@ -28,6 +32,14 @@ namespace Core.Utilities
 
             return instance;
         }
+
+#if UNITY_EDITOR
+        [OnInspectorGUI, PropertyOrder(-10000)]
+        private void DrawSingletonLabel()
+        {
+            EditorGUILayout.HelpBox("Singleton", MessageType.None, true);
+        }
+#endif
     }
 
     [DefaultExecutionOrder(-1000)]

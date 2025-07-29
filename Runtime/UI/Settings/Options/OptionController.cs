@@ -16,8 +16,9 @@ namespace Core.UI.Settings.Options
         {
             base.Awake();
             option ??= GetComponentInParent<Option>();
-            leftArrow.onClick.AddListener(option.PrevOption);
-            rightArrow.onClick.AddListener(option.NextOption);
+            if (!option) return;
+            leftArrow?.onClick.AddListener(option.PrevOption);
+            rightArrow?.onClick.AddListener(option.NextOption);
         }
 
         public override void OnMove(AxisEventData eventData)
