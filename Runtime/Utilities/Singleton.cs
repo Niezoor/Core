@@ -12,7 +12,7 @@ namespace Core.Utilities
             where T1 : MonoBehaviour
         {
             var instance = FindFirstObjectByType<T1>();
-            if (instance != null) return instance;
+            if (instance) return instance;
             var obj = new GameObject
             {
                 name = $"[{typeof(T1).Name}]",
@@ -47,13 +47,13 @@ namespace Core.Utilities
     {
         protected static T instance;
 
-        public static bool HasInstance => instance != null;
+        public static bool HasInstance => instance;
 
         public static T Instance
         {
             get
             {
-                if (instance == null)
+                if (!instance)
                 {
                     instance = GetOrCreateDefault<T>();
                 }
@@ -64,7 +64,7 @@ namespace Core.Utilities
 
         protected static void TryCreateDefault()
         {
-            if (instance == null)
+            if (!instance)
             {
                 instance = GetOrCreateDefault<T>();
             }

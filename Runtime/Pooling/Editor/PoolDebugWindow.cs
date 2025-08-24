@@ -114,29 +114,22 @@ namespace Core.Pooling.Editor
             DespawnAction<T> despawn,
             DespawnAction<T> dispose)
         {
-            var instances = new List<T>(PerformanceTestsAmount);
             var preloadTimer = Stopwatch.StartNew();
             prelaod.Invoke(prefab, PerformanceTestsAmount);
             preloadTimer.Stop();
             var spawnTimer = Stopwatch.StartNew();
             for (int i = 0; i < PerformanceTestsAmount; i++)
             {
-                instances.Add(spawn.Invoke(prefab));
+                var instance = spawn.Invoke(prefab);
+                despawn.Invoke(instance);
             }
 
             spawnTimer.Stop();
-            var despawnTimer = Stopwatch.StartNew();
-            for (var i = 0; i < PerformanceTestsAmount; i++)
-            {
-                despawn.Invoke(instances[i]);
-            }
-
-            despawnTimer.Stop();
             var disposeTimer = Stopwatch.StartNew();
             dispose.Invoke(prefab);
             disposeTimer.Stop();
             return
-                $"Preload:{preloadTimer.ElapsedMilliseconds}ms\t Spawn:{spawnTimer.ElapsedMilliseconds}ms\t Despawn:{despawnTimer.ElapsedMilliseconds}ms\t Dispose:{disposeTimer.ElapsedMilliseconds}ms\n";
+                $"Preload:{preloadTimer.ElapsedMilliseconds}ms\t Spawn and despawn:{spawnTimer.ElapsedMilliseconds}ms\t Dispose:{disposeTimer.ElapsedMilliseconds}ms\n";
         }
 
         public static string PerformanceGameObjectTest(

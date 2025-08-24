@@ -44,20 +44,20 @@ namespace Core.UI
         [Button]
         public void Open()
         {
-            Debug.Log($"Opening UI Panel {this}", this);
+            Debug.Log($"Opening UI Panel {name}", this);
             UIManager.Instance.OpenPanel(this);
         }
 
         [Button]
         public void Close()
         {
-            Debug.Log($"Closing UI Panel {this}", this);
+            Debug.Log($"Closing UI Panel {name}", this);
             UIManager.ClosePanel(this);
         }
 
         public void PlayCloseTransition()
         {
-            if (animator.runtimeAnimatorController == null)
+            if (!animator.runtimeAnimatorController)
             {
                 OnCloseTransitionFinish();
                 return;

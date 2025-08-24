@@ -14,13 +14,13 @@ namespace Core.Save
         PlayerPrefsStorage = 1,
     }
 
-    public class SaveSettings : SettingsSo<SaveSettings>
+    public class SaveSettings : ScriptableObjectSettings<SaveSettings>
     {
         public PlatformSpecific<StorageType> LocalStorageType;
 
 #if UNITY_EDITOR
         [SettingsProvider]
-        public static SettingsProvider CreateSettingsProvider() => GetDefaultSettings("Save");
+        public static SettingsProvider CreateSettingsProvider() => GetDefaultSettings("Core/Save");
 #endif
     }
 }

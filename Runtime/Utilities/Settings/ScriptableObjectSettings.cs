@@ -30,7 +30,7 @@ namespace Core.Utilities.Settings
     /// </summary>
     /// <typeparam name="T">Class of the settings</typeparam>
     [HideMonoScript]
-    public class SettingsSo<T> : ScriptableObject where T : SettingsSo<T>
+    public class ScriptableObjectSettings<T> : ScriptableObject where T : ScriptableObjectSettings<T>
     {
         protected static T instance;
 
@@ -169,9 +169,9 @@ namespace Core.Utilities.Settings
             AssetDatabase.SaveAssets();
         }
 
-        protected static SettingsSoProvider<T> GetDefaultSettings(string settingsName)
+        protected static ScriptableObjectSettingsProvider<T> GetDefaultSettings(string settingsName)
         {
-            return new SettingsSoProvider<T>(Instance, settingsName);
+            return new ScriptableObjectSettingsProvider<T>(Instance, settingsName);
         }
 #endif
     }

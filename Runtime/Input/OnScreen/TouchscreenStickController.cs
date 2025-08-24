@@ -17,7 +17,7 @@ namespace Core.Input.OnScreen
         Free // Initial touch position become stick position and follow around without going beyond the set area of control
     }
 
-    public class TouchscreenSticksController : OnScreenControl
+    public class TouchscreenStickController : OnScreenControl
     {
         public StickMode Mode = StickMode.Free;
 
