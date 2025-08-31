@@ -7,7 +7,7 @@ using UnityEngine.InputSystem.LowLevel;
 using UnityEngine.InputSystem.Utilities;
 using Vector2 = System.Numerics.Vector2;
 
-namespace Core.Input.CustomDevice
+namespace Core.InputSystemExtension.CustomDevice
 {
     public struct TouchscreenGamepadState : IInputStateTypeInfo
     {

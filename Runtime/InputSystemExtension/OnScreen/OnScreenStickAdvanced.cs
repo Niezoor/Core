@@ -8,7 +8,7 @@ using UnityEngine.InputSystem.Layouts;
 using UnityEngine.InputSystem.OnScreen;
 using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 
-namespace Core.Input.OnScreen
+namespace Core.InputSystemExtension.OnScreen
 {
     public enum StickMode
     {
@@ -17,7 +17,8 @@ namespace Core.Input.OnScreen
         Free // Initial touch position become stick position and follow around without going beyond the set area of control
     }
 
-    public class TouchscreenStickController : OnScreenControl
+    [DefaultExecutionOrder(-1000)]
+    public class OnScreenStickAdvanced : OnScreenControl
     {
         public StickMode Mode = StickMode.Free;
 
