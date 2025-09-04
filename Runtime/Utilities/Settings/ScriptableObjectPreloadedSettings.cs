@@ -1,7 +1,11 @@
-﻿using System.IO;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+#if !UNITY_EDITOR
+using System.Linq;
+#endif
 
 namespace Core.Utilities.Settings
 {
@@ -33,15 +37,25 @@ namespace Core.Utilities.Settings
             if (instance)
             {
                 EditorBuildSettings.AddConfigObject($"com.core.{typeof(T).Name}", instance, true);
+                AddToPreloadedAssets();
             }
 
             ResetOnPlayModeChange();
 #else
-            instance = FindFirstObjectByType<T>();
+            instance = Resources.FindObjectsOfTypeAll<T>().FirstOrDefault();
 #endif
         }
 
 #if UNITY_EDITOR
+        private static void AddToPreloadedAssets()
+        {
+            if (!instance) return;
+            var preloadedAssets = new List<Object>(PlayerSettings.GetPreloadedAssets());
+            if (preloadedAssets.Contains(instance)) return;
+            preloadedAssets.Add(instance);
+            PlayerSettings.SetPreloadedAssets(preloadedAssets.ToArray());
+        }
+
         private static void ResetOnPlayModeChange()
         {
             EditorApplication.playModeStateChanged -= OnPlayModeChange;
