@@ -14,7 +14,7 @@ namespace Core.Save
         PlayerPrefsStorage = 1,
     }
 
-    public class SaveSettings : ScriptableObjectSettings<SaveSettings>
+    public class SaveSettings : ScriptableObjectPreloadedSettings<SaveSettings>
     {
         public PlatformSpecific<StorageType> LocalStorageType;
 

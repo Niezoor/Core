@@ -15,7 +15,7 @@ namespace Core.Utilities.Settings
 {
     public static class SettingsConst
     {
-        public const string AddressableGroupName = "SettingsSo";
+        public const string AddressableGroupName = "Settings";
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace Core.Utilities.Settings
     /// </summary>
     /// <typeparam name="T">Class of the settings</typeparam>
     [HideMonoScript]
-    public class ScriptableObjectSettings<T> : ScriptableObject where T : ScriptableObjectSettings<T>
+    public abstract class ScriptableObjectSettings<T> : ScriptableObject where T : ScriptableObjectSettings<T>
     {
         protected static T instance;
 
@@ -38,7 +38,7 @@ namespace Core.Utilities.Settings
         {
             get
             {
-                if (instance == null)
+                if (!instance)
                 {
                     GetOrCreateDefault();
                 }
@@ -47,11 +47,11 @@ namespace Core.Utilities.Settings
             }
         }
 
-        public static bool HasInstance => instance != null;
+        public static bool HasInstance => instance;
 
         protected virtual void OnEnable()
         {
-            if (instance == null)
+            if (!instance)
             {
                 instance = (T)this;
             }
@@ -94,7 +94,7 @@ namespace Core.Utilities.Settings
         private static void GetOrCreateDefault()
         {
             LoadFromAddressable();
-            if (instance == null)
+            if (!instance)
             {
                 CreateDefault();
             }
@@ -105,8 +105,16 @@ namespace Core.Utilities.Settings
             var handle = Addressables.LoadAssetAsync<T>(typeof(T).Name);
             if (handle.IsValid())
             {
-                instance = handle.WaitForCompletion();
-                Debug.Log($"Load settings {instance}");
+                if (handle.IsDone)
+                {
+                    instance = handle.Result;
+                    Debug.Log($"Settings preloaded ({instance})", instance);
+                }
+                else
+                {
+                    instance = handle.WaitForCompletion();
+                    Debug.Log($"Settings loaded sync ({instance})", instance);
+                }
 #if UNITY_EDITOR
                 ResetOnPlayModeChange();
 #endif
@@ -129,42 +137,62 @@ namespace Core.Utilities.Settings
             }
         }
 
-        private static string GetPath()
+        protected static string GetAssetPath()
         {
             var type = typeof(T);
             var attribute = (SettingsPathAttribute)type.GetCustomAttribute(typeof(SettingsPathAttribute));
             var path = attribute != null ? attribute.Path : "Assets/Settings/";
             return Path.Combine(path, ObjectNames.NicifyVariableName(type.Name) + ".asset");
         }
+
+        protected static void TryLoadAsset()
+        {
+            var path = GetAssetPath();
+            instance = AssetDatabase.LoadAssetAtPath<T>(path);
+        }
+
+        protected static void CreateAndSaveAsset()
+        {
+            if (instance) return;
+            var path = GetAssetPath();
+            instance = CreateInstance<T>();
+            instance.name = Path.GetFileNameWithoutExtension(path);
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+            AssetDatabase.CreateAsset(instance, path);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"Create default settings:{typeof(T).Name}", instance);
+        }
 #endif
 
         private static void CreateDefault()
         {
+            if (instance) return;
+#if UNITY_EDITOR
+            TryLoadAsset();
+            CreateAndSaveAsset();
+            SaveAsAddressable();
+#else
             var type = typeof(T);
             instance = CreateInstance<T>();
-#if UNITY_EDITOR
-            var path = GetPath();
-            instance.name = $"{ObjectNames.NicifyVariableName(type.Name)}";
-            Directory.CreateDirectory(Path.GetDirectoryName(path));
-            AssetDatabase.CreateAsset(instance, path);
-            Debug.Log($"Create default settings:{type.Name}", instance);
-            AssetDatabase.SaveAssets();
-            SaveAsAddressable();
 #endif
         }
 
 #if UNITY_EDITOR
         private static void SaveAsAddressable()
         {
-            if (instance == null) return;
+            if (!instance) return;
             var name = typeof(T).Name;
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             settings.AddLabel(name);
+            settings.AddLabel(SettingsConst.AddressableGroupName);
             var group = settings.FindGroup(SettingsConst.AddressableGroupName);
-            group ??= settings.CreateGroup(SettingsConst.AddressableGroupName, false, true, false, settings.DefaultGroup.Schemas);
-            var guid = AssetDatabase.AssetPathToGUID(GetPath());
+            group ??= settings.CreateGroup(SettingsConst.AddressableGroupName, false, true, false,
+                settings.DefaultGroup.Schemas);
+            var guid = AssetDatabase.AssetPathToGUID(GetAssetPath());
             var entry = settings.CreateOrMoveEntry(guid, group);
+            entry.labels.Clear();
             entry.labels.Add(name);
+            entry.labels.Add(SettingsConst.AddressableGroupName);
             settings.SetDirty(AddressableAssetSettings.ModificationEvent.EntryMoved, entry, true);
             AssetDatabase.SaveAssets();
         }

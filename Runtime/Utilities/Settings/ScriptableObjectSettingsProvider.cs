@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 
 namespace Core.Utilities.Settings
 {
-    public class ScriptableObjectSettingsProvider<T> : SettingsProvider where T : ScriptableObjectSettings<T>
+    public class ScriptableObjectSettingsProvider<T> : SettingsProvider where T : ScriptableObject
     {
         private readonly ScriptableObject settings;
         private SerializedObject serializedSettings;
@@ -36,7 +36,7 @@ namespace Core.Utilities.Settings
 
         public override void OnGUI(string searchContext)
         {
-            if (settings == null || editor == null) return;
+            if (!settings || !editor) return;
             EditorGUIUtility.labelWidth = 250;
             GUILayout.BeginHorizontal();
             GUILayout.Space(10);

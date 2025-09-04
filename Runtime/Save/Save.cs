@@ -50,7 +50,7 @@ namespace Core.Save
                     break;
             }
 
-            if (Storage == null) return;
+            if (!Storage) return;
             Storage.OnLoaded += OnLoaded;
             Storage.OnLoaded += LoadPlayTime;
             Storage.OnSynced += OnSynced;
