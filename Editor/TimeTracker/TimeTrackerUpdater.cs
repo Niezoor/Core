@@ -30,6 +30,7 @@ namespace Core.Editor.TimeTracker
 
         public static void Resume()
         {
+            prevUpdateTime = DateTime.Now;
             Paused = false;
             EditorApplication.update -= UpdateTime;
             EditorApplication.update += UpdateTime;
