@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using Sirenix.Utilities.Editor;
 using UnityEditor;
 using UnityEngine;
 using FilePathAttribute = UnityEditor.FilePathAttribute;
+using FontStyle = UnityEngine.FontStyle;
 
 namespace Core.Editor.TimeTracker
 {
@@ -50,7 +52,20 @@ namespace Core.Editor.TimeTracker
             totalTimeStyle.fontSize = 24;
             totalTimeStyle.fontStyle = FontStyle.Bold;
             totalTimeStyle.margin = new RectOffset(0, 0, 0, 0);
-            totalTimeStyle.padding = new RectOffset(0, 0, 0, 10);
+            totalTimeStyle.padding = new RectOffset(-30, 0, 0, 0);
+            EditorGUILayout.BeginHorizontal();
+            var buttonStyle = new GUIStyle(EditorStyles.iconButton);
+            buttonStyle.fixedWidth = 30;
+            buttonStyle.fixedHeight = 30;
+            buttonStyle.alignment = TextAnchor.MiddleCenter;
+            buttonStyle.margin = new RectOffset(10, 0, 0, 0);
+            var icon = TimeTrackerUpdater.Paused ? EditorIcons.Play.Active : EditorIcons.Pause.Active;
+            if (GUILayout.Button(icon, buttonStyle))
+            {
+                if (TimeTrackerUpdater.Paused) TimeTrackerUpdater.Resume();
+                else TimeTrackerUpdater.Pause();
+            }
+
             var outText = EditorGUILayout.TextField(inText, totalTimeStyle, GUILayout.Height(30));
             if (outText != inText)
             {
@@ -66,6 +81,8 @@ namespace Core.Editor.TimeTracker
                     Debug.LogException(e);
                 }
             }
+
+            EditorGUILayout.EndHorizontal();
         }
 
         private static UnityEditor.Editor editor;
@@ -101,32 +118,6 @@ namespace Core.Editor.TimeTracker
             };
 
             return settingsProvider;
-        }
-    }
-
-    public class TimeTrackerWindow : EditorWindow
-    {
-        [MenuItem("Core/Show Time Tracker")]
-        public static void ShowWindow()
-        {
-            var window = EditorWindow.GetWindow(typeof(TimeTrackerWindow));
-            window.titleContent = new GUIContent("Time Tracker");
-        }
-
-        private void OnEnable()
-        {
-            EditorApplication.update -= Repaint;
-            EditorApplication.update += Repaint;
-        }
-
-        private void OnDestroy()
-        {
-            EditorApplication.update -= Repaint;
-        }
-
-        private void OnGUI()
-        {
-            TimeTracker.ShowTotalTimeGUI();
         }
     }
 }

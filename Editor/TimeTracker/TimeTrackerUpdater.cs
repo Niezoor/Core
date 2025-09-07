@@ -1,5 +1,6 @@
 ﻿using System;
 using UnityEditor;
+using UnityEngine;
 
 namespace Core.Editor.TimeTracker
 {
@@ -7,6 +8,9 @@ namespace Core.Editor.TimeTracker
     public static class TimeTrackerUpdater
     {
         private static DateTime prevUpdateTime;
+        private static readonly TimeSpan maxDeltaTime = TimeSpan.FromMinutes(1);
+        
+        public static bool Paused { get; private set; }
 
         static TimeTrackerUpdater()
         {
@@ -15,6 +19,20 @@ namespace Core.Editor.TimeTracker
             EditorApplication.update += UpdateTime;
             EditorApplication.quitting -= SaveTimeData;
             EditorApplication.quitting += SaveTimeData;
+            Paused = false;
+        }
+
+        public static void Pause()
+        {
+            Paused = true;
+            EditorApplication.update -= UpdateTime;
+        }
+
+        public static void Resume()
+        {
+            Paused = false;
+            EditorApplication.update -= UpdateTime;
+            EditorApplication.update += UpdateTime;
         }
 
         private static void SaveTimeData()
@@ -25,7 +43,15 @@ namespace Core.Editor.TimeTracker
         private static void UpdateTime()
         {
             var deltaTime = DateTime.Now - prevUpdateTime;
-            TimeTracker.instance.TotalTime += deltaTime;
+            if (deltaTime < maxDeltaTime)
+            {
+                TimeTracker.instance.TotalTime += deltaTime;
+            }
+            else
+            {
+                Debug.LogWarning($"Time Tracker delta time:{deltaTime} was too big, max is {maxDeltaTime}");
+            }
+
             prevUpdateTime = DateTime.Now;
         }
     }
