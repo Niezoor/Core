@@ -37,7 +37,7 @@ namespace Core.Utilities.Settings
         public override void OnGUI(string searchContext)
         {
             if (!settings || !editor) return;
-            EditorGUIUtility.labelWidth = 250;
+            //EditorGUIUtility.labelWidth = 250;
             GUILayout.BeginHorizontal();
             GUILayout.Space(10);
             GUILayout.BeginVertical();
