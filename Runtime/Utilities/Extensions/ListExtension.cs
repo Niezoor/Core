@@ -17,5 +17,7 @@ namespace Core.Utilities.Extensions
         {
             return source.ToList().Random();
         }
+
+        public static bool IsNullOrEmpty<T>(this IList<T> list) => list == null || list.Count == 0;
     }
 }
