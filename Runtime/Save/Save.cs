@@ -30,8 +30,7 @@ namespace Core.Save
             set => Instance.playTime = value;
         }
 
-        public Storage Storage;
-        [ShowInInspector] private List<CloudSave> cloudSaves = new();
+        public Storage Storage { get; private set; }
 
         [ShowInInspector] private double playTime = 0;
 
@@ -114,21 +113,6 @@ namespace Core.Save
             IsUnsupported = true;
             OnUnsupportedSave?.Invoke();
         }
-
-        public static void RegisterCloudSave(CloudSave cloudSave)
-        {
-            Instance.cloudSaves.Add(cloudSave);
-            cloudSave.onConflict += Instance.ShowConflict;
-            cloudSave.onLoaded += Instance.CloudSaveLoaded;
-        }
-
-        private void ShowConflict(CloudSave cloudSave)
-        {
-            OnConflict?.Invoke(cloudSave);
-        }
-
-        private void CloudSaveLoaded(CloudSave cloudSave)
-        { }
 
         private void LoadPlayTime()
         {

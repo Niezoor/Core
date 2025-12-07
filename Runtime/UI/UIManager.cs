@@ -21,7 +21,7 @@ namespace Core.UI
 
         public void RegisterScreen(UIScreen uiScreen)
         {
-            screens[uiScreen.layer] = uiScreen;
+            screens[uiScreen.Layer] = uiScreen;
         }
 
         public void OpenPanel(UIPanel panelPrefab)

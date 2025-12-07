@@ -10,7 +10,9 @@ namespace Core.UI
 
     public class UIScreen : MonoBehaviour
     {
-        public UIScreenLayer layer;
+        [SerializeField] private UIScreenLayer layer;
+
+        public UIScreenLayer Layer => layer;
 
         private void Awake()
         {
