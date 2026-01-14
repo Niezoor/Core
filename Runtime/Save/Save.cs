@@ -9,7 +9,7 @@ using UnityEngine;
 namespace Core.Save
 {
     //[ExecuteAlways]
-    public class Save : Singleton<Save>
+    public class Save : PersistentSingleton<Save>
     {
         public static Action OnLoaded;
         public static Action OnSynced;

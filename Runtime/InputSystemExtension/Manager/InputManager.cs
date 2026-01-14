@@ -18,7 +18,7 @@ namespace Core.InputSystemExtension.Manager
         Unknown,
     }
 
-    public class InputManager : Singleton<InputManager>
+    public class InputManager : PersistentSingleton<InputManager>
     {
         public event Action OnControlsChanged;
 

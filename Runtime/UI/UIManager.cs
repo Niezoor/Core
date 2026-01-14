@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Core.UI
 {
-    public class UIManager : Singleton<UIManager>
+    public class UIManager : PersistentSingleton<UIManager>
     {
         [ShowInInspector, ReadOnly] private Dictionary<UIScreenLayer, UIScreen> screens = new();
 

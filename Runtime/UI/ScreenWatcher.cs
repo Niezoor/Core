@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Core.UI
 {
-    public class ScreenWatcher : Singleton<ScreenWatcher>
+    public class ScreenWatcher : PersistentSingleton<ScreenWatcher>
     {
         public event Action OnScreenChanged;
         public event Action OnSafeAreaChanged;

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Core.Utilities
 {
-    public class Manager<T1, T2> : Singleton<T1> where T1 : MonoBehaviour
+    public class Manager<T1, T2> : PersistentSingleton<T1> where T1 : MonoBehaviour
     {
         public Action<T2> OnRegistered;
         public Action<T2> OnUnregistered;

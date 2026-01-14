@@ -1,4 +1,4 @@
-﻿using Sirenix.OdinInspector;
+using Sirenix.OdinInspector;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -55,7 +55,7 @@ namespace Core.Utilities
             {
                 if (!instance)
                 {
-                    instance = GetOrCreateDefault<T>();
+                    instance = GetOrCreateDefault<T>(false);
                 }
 
                 return instance;
@@ -66,7 +66,7 @@ namespace Core.Utilities
         {
             if (!instance)
             {
-                instance = GetOrCreateDefault<T>();
+                instance = GetOrCreateDefault<T>(false);
             }
         }
 
