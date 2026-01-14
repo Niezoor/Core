@@ -8,12 +8,15 @@ namespace Core.Editor.TimeTracker
     public static class TimeTrackerUpdater
     {
         private static DateTime prevUpdateTime;
+        private static DateTime lastSaveTime;
         private static readonly TimeSpan maxDeltaTime = TimeSpan.FromMinutes(1);
-        
+        private static readonly TimeSpan saveInterval = TimeSpan.FromMinutes(1);
+
         public static bool Paused { get; private set; }
 
         static TimeTrackerUpdater()
         {
+            lastSaveTime = DateTime.Now;
             prevUpdateTime = DateTime.Now;
             EditorApplication.update -= UpdateTime;
             EditorApplication.update += UpdateTime;
@@ -39,18 +42,21 @@ namespace Core.Editor.TimeTracker
         private static void SaveTimeData()
         {
             TimeTracker.instance.SaveSettings();
+            lastSaveTime = DateTime.Now;
         }
 
         private static void UpdateTime()
         {
             var deltaTime = DateTime.Now - prevUpdateTime;
+            var timeSinceLastSave = DateTime.Now - lastSaveTime;
             if (deltaTime < maxDeltaTime)
             {
                 TimeTracker.instance.TotalTime += deltaTime;
             }
-            else
+
+            if (timeSinceLastSave > saveInterval)
             {
-                Debug.LogWarning($"Time Tracker delta time:{deltaTime} was too big, max is {maxDeltaTime}");
+                SaveTimeData();
             }
 
             prevUpdateTime = DateTime.Now;
