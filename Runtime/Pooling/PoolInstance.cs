@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Core.Utilities;
 using UnityEngine;
 
 namespace Core.Pooling
@@ -28,13 +29,12 @@ namespace Core.Pooling
         {
             Parent = parent;
             IsParentSet = parent;
-#if UNITY_EDITOR
             if (IsParentSet) return;
             var gameObject = new GameObject(name);
             Parent = gameObject.transform;
+            Object.DontDestroyOnLoad(gameObject);
             IsParentSet = true;
             IsPoolParent = true;
-#endif
         }
     }
 

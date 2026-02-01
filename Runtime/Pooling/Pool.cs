@@ -267,12 +267,12 @@ namespace Core.Pooling
 #if UNITY_EDITOR
             EditorSceneManager.sceneClosing += DisposeAllPools;
 #endif
-            SceneManager.sceneUnloaded += s => DisposeAllPools(s, false);
+            SceneManager.activeSceneChanged += (s,s2) => DisposeAllPools(s, false);
         }
 
         private static void DisposeAllPools(Scene scene, bool removingScene)
         {
-            DisposeAll();
+            //DisposeAll();
         }
 
 #if UNITY_EDITOR
@@ -294,7 +294,7 @@ namespace Core.Pooling
             GameObjectLinks.Clear();
             ComponentPools.Clear();
             ComponentLinks.Clear();
-            Debug.Log($"All pooled objects cleared");
+            Debug.Log($"All pooled objects disposed");
         }
     }
 }
