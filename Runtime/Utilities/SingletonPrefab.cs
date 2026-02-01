@@ -11,12 +11,18 @@ namespace Core.Utilities
 
         public static bool HasInstance => Instance != null;
 
+        [SerializeField] private bool dontDestroyOnLoad;
+
         protected void Awake()
         {
             if (Instance == null)
             {
                 Instance = this as T;
                 SingletonAwake();
+                if (dontDestroyOnLoad)
+                {
+                    DontDestroyOnLoad(gameObject);
+                }
             }
             else
             {
@@ -51,16 +57,13 @@ namespace Core.Utilities
         }
 
         protected virtual void SingletonAwake()
-        {
-        }
+        { }
 
         protected virtual void SingletonStart()
-        {
-        }
+        { }
 
         protected virtual void SingletonOnDestroy()
-        {
-        }
+        { }
 
 #if UNITY_EDITOR
         [OnInspectorGUI, PropertyOrder(-10000)]
