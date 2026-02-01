@@ -20,7 +20,7 @@ namespace Core.Utilities
                 hideFlags = flags
 #endif
             };
-            Debug.Log($"Creating new instance of {obj.name}");
+            Debug.Log($"Creating new instance of {obj.name}", obj);
             instance = obj.AddComponent<T1>();
             if (dontDestroy)
             {

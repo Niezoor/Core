@@ -108,7 +108,7 @@ namespace Core.Utilities.Settings
                 if (handle.IsDone)
                 {
                     instance = handle.Result;
-                    Debug.Log($"Settings preloaded ({instance})", instance);
+                    Debug.Log($"Settings already loaded ({instance})", instance);
                 }
                 else
                 {
