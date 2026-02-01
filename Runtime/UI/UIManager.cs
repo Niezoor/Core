@@ -24,24 +24,29 @@ namespace Core.UI
             screens[uiScreen.Layer] = uiScreen;
         }
 
-        public void OpenPanel(UIPanel panelPrefab)
+        public UIScreen GetScreen(UIScreenLayer layer)
+        {
+            return screens.GetValueOrDefault(layer);
+        }
+
+        public UIPanel OpenPanel(UIPanel panelPrefab)
         {
             if (!screens.ContainsKey(panelPrefab.Layer))
             {
                 Debug.LogError($"UIScreen:{panelPrefab.Layer} not registered");
-                return;
+                return null;
             }
 
             if (panelPrefab.IsInstance)
             {
                 Debug.LogError($"Cannot open instantiated panel");
-                return;
+                return panelPrefab.Instance;
             }
 
             if (panels.Any(p => p.Prefab == panelPrefab || p.name.Equals(panelPrefab.name)))
             {
                 Debug.LogWarning($"Panel already opened");
-                return;
+                return panelPrefab.Instance;
             }
 
             panelPrefab.Preload(1, screens[panelPrefab.Layer].transform);
@@ -49,6 +54,7 @@ namespace Core.UI
             panelInstance.IsInstance = true;
             panelInstance.Prefab = panelPrefab;
             panelPrefab.Instance = panelInstance;
+            return panelInstance;
         }
 
         public static void ClosePanel(UIPanel panel)
