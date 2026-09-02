@@ -1,18 +1,18 @@
 {
-    "name": "Core.Pooling.Editor",
-    "rootNamespace": "Core.Pooling.Editor",
-    "references": [
-        "Core.Pooling"
-    ],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name" : "Core.Pooling.Editor",
+  "rootNamespace" : "Core.Pooling.Editor",
+  "references" : [
+    "Core.Pooling"
+  ],
+  "includePlatforms" : [
+    "Editor"
+  ],
+  "excludePlatforms" : [],
+  "allowUnsafeCode" : false,
+  "overrideReferences" : false,
+  "precompiledReferences" : [],
+  "autoReferenced" : true,
+  "defineConstraints" : [],
+  "versionDefines" : [],
+  "noEngineReferences" : false
 }

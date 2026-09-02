@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Core.Utilities
@@ -10,7 +9,7 @@ namespace Core.Utilities
         public Action<T2> OnRegistered;
         public Action<T2> OnUnregistered;
 
-        [ShowInInspector] public readonly HashSet<T2> Registered = new();
+        public readonly HashSet<T2> Registered = new();
         public int Count { get; private set; }
 
         public virtual void Register(T2 component)
