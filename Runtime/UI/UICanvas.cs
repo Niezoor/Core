@@ -8,7 +8,7 @@ namespace Core.UI
         Bottom,
     }
 
-    public class UIScreen : MonoBehaviour
+    public class UICanvas : MonoBehaviour
     {
         [SerializeField] private UIScreenLayer layer;
 

@@ -9,7 +9,7 @@ namespace Core.UI
 {
     public class UIManager : PersistentSingleton<UIManager>
     {
-        [ShowInInspector, ReadOnly] private Dictionary<UIScreenLayer, UIScreen> screens = new();
+        [ShowInInspector, ReadOnly] private Dictionary<UIScreenLayer, UICanvas> screens = new();
 
         private static readonly List<UIPanel> panels = new();
 
@@ -19,12 +19,12 @@ namespace Core.UI
             panels.Clear();
         }
 
-        public void RegisterScreen(UIScreen uiScreen)
+        public void RegisterScreen(UICanvas uiCanvas)
         {
-            screens[uiScreen.Layer] = uiScreen;
+            screens[uiCanvas.Layer] = uiCanvas;
         }
 
-        public UIScreen GetScreen(UIScreenLayer layer)
+        public UICanvas GetScreen(UIScreenLayer layer)
         {
             return screens.GetValueOrDefault(layer);
         }
