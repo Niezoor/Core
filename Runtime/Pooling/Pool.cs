@@ -272,7 +272,7 @@ namespace Core.Pooling
 
         private static void DisposeAllPools(Scene scene, bool removingScene)
         {
-            //DisposeAll();
+            DisposeAll();
         }
 
 #if UNITY_EDITOR
