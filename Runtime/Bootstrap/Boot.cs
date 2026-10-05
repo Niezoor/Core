@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using Core.Utilities.Settings;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Debug = UnityEngine.Debug;
@@ -78,7 +79,7 @@ namespace Core.Bootstrap
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void InitializeOnLoad()
         {
-            if (!BootSettings.TryGetExisting(out var settings)) return;
+            if (!BootSettings.TryGet(out var settings)) return;
 
             Initialize(settings);
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -106,8 +107,18 @@ namespace Core.Bootstrap
 
             var startedAt = Time.realtimeSinceStartupAsDouble;
             Debug.Log($"[Boot] Starting at {startedAt:0.000} s since launch");
-            RunInitializers(settings.Initializers, settings.InitializerBudgetMs);
-            StartServices(settings.Services);
+            // Nothing async has loaded this early: the editor reports reads of async settings it would resolve anyway.
+            SettingsRegistry.PreloadedOnly = true;
+            try
+            {
+                RunInitializers(settings.Initializers, settings.InitializerBudgetMs);
+                StartServices(settings.Services);
+            }
+            finally
+            {
+                SettingsRegistry.PreloadedOnly = false;
+            }
+
             Debug.Log($"[Boot] Initialized in {(Time.realtimeSinceStartupAsDouble - startedAt) * 1000.0:0.0} ms " +
                       $"({CountRecords(BootPhase.Initializer)} initializers, {CountRecords(BootPhase.Service)} services started)");
         }

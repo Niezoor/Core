@@ -1,4 +1,6 @@
+using System.Linq;
 using Core.Bootstrap;
+using Core.Bootstrap.Tasks;
 using UnityEditor;
 using UnityEngine;
 
@@ -13,6 +15,7 @@ namespace Core.Editor
 
         private BootSceneSetup.Status status;
         private string bootScenePath;
+        private bool hasAsyncSettings;
         private double refreshedAt = double.NegativeInfinity;
 
         private void OnEnable() => Refresh();
@@ -23,6 +26,7 @@ namespace Core.Editor
 
             DrawBootScene();
             DrawFirstSceneWarning();
+            DrawLoadSettingsWarning();
             if (GUILayout.Button("Open Boot Monitor")) BootMonitorWindow.Open();
             EditorGUILayout.Space();
             DrawDefaultInspector();
@@ -31,7 +35,24 @@ namespace Core.Editor
         private void Refresh()
         {
             status = BootSceneSetup.GetStatus(out bootScenePath);
+            hasAsyncSettings = SettingsAssetSync.HasAsyncAssets();
             refreshedAt = EditorApplication.timeSinceStartup;
+        }
+
+        private void DrawLoadSettingsWarning()
+        {
+            var settings = (BootSettings)target;
+            if (!hasAsyncSettings || settings.SplashTasks.Any(t => t is LoadSettingsTask { Enabled: true })) return;
+
+            EditorGUILayout.HelpBox("The project has settings that load asynchronously, but no Load Settings splash " +
+                                    "task: in a build reading them throws until SettingsRegistry.LoadAllAsync runs.",
+                MessageType.Warning);
+            if (GUILayout.Button("Add Load Settings Task"))
+            {
+                Undo.RecordObject(settings, "Add Load Settings Task");
+                settings.SplashTasks.Add(new LoadSettingsTask());
+                EditorUtility.SetDirty(settings);
+            }
         }
 
         private void DrawBootScene()

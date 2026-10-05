@@ -30,6 +30,7 @@ namespace Core.Utilities.Settings
     /// </summary>
     /// <typeparam name="T">Class of the settings</typeparam>
     [HideMonoScript]
+    [Obsolete("Use SettingsAsset<T>: found by type wherever the asset lies, loaded by SettingsRegistry.LoadAllAsync.")]
     public abstract class ScriptableObjectSettings<T> : ScriptableObject where T : ScriptableObjectSettings<T>
     {
         protected static T instance;

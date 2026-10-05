@@ -7,14 +7,13 @@ using UnityEngine.InputSystem;
 
 namespace Core.InputSystemExtension
 {
-    public class InputSystemSettings : ScriptableObjectSettings<InputSystemSettings>
+    /// <summary>Preloaded: InputManager may start on the splash, before async settings load.</summary>
+    [PreloadedSettings, SettingsMenu("Game/Input")]
+    public class InputSystemSettings : SettingsAsset<InputSystemSettings>
     {
         public InputActionAsset InputActionAsset;
 
 #if UNITY_EDITOR
-        [SettingsProvider]
-        public static SettingsProvider CreateSettingsProvider() => GetDefaultSettings("Game/Input");
-
         private Editor managerEditor;
 
         [OnInspectorGUI]

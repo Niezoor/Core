@@ -8,7 +8,8 @@ namespace Core.Bootstrap.Tasks
 {
     /// <summary>
     /// Loads every asset with a label and keeps it loaded for the rest of the run, so the game finds it in memory -
-    /// by default the "Settings" label that <c>ScriptableObjectSettings</c> puts its assets under.
+    /// by default the "Settings" label of the old <c>ScriptableObjectSettings</c>. <c>SettingsAsset</c> types need
+    /// <see cref="LoadSettingsTask"/> instead: only it hands them to <c>SettingsRegistry</c>.
     /// </summary>
     [Serializable]
     public sealed class PreloadAddressablesLabelTask : SplashTask

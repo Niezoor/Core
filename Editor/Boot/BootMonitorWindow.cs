@@ -33,7 +33,7 @@ namespace Core.Editor
 
             if (!Boot.IsInitialized && Boot.Records.Count == 0)
             {
-                EditorGUILayout.HelpBox(BootSettings.TryGetExisting(out _)
+                EditorGUILayout.HelpBox(BootSettings.TryGet(out _)
                     ? "Enter Play Mode to see the boot."
                     : "The project has no BootSettings (Core > Boot > Setup Boot Scene).", MessageType.Info);
                 return;

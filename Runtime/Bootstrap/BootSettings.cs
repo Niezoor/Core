@@ -2,15 +2,13 @@ using System.Collections.Generic;
 using Core.Utilities;
 using Core.Utilities.Settings;
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Core.Bootstrap
 {
     /// <summary>What <see cref="Boot"/> runs, in Project Settings &gt; Core &gt; Boot. Preloaded, so it is there before
     /// anything else loads.</summary>
-    public sealed class BootSettings : ScriptableObjectPreloadedSettings<BootSettings>
+    [PreloadedSettings, SettingsMenu("Core/Boot")]
+    public sealed class BootSettings : SettingsAsset<BootSettings>
     {
         [Tooltip("Loaded in the background during the splash and activated when it ends.")]
         public SceneRef FirstScene;
@@ -27,10 +25,5 @@ namespace Core.Bootstrap
         [SerializeReference, SubclassPicker] public List<BootInitializer> Initializers = new();
         [SerializeReference, SubclassPicker] public List<BootService> Services = new();
         [SerializeReference, SubclassPicker] public List<SplashTask> SplashTasks = new();
-
-#if UNITY_EDITOR
-        [SettingsProvider]
-        public static SettingsProvider CreateSettingsProvider() => GetDefaultSettings("Core/Boot");
-#endif
     }
 }

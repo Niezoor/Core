@@ -48,7 +48,7 @@ namespace Core.Editor
         [MenuItem("Core/Boot/Setup Boot Scene")]
         private static void SetupFromMenu()
         {
-            if (!BootSettings.TryGetExisting(out _))
+            if (!BootSettings.TryGet(out _))
             {
                 // The explicit request is the opt-in: create the settings it needs.
                 _ = BootSettings.Instance;
@@ -71,7 +71,7 @@ namespace Core.Editor
         public static Status GetStatus(out string bootScenePath)
         {
             bootScenePath = null;
-            if (!BootSettings.TryGetExisting(out _)) return Status.NotUsed;
+            if (!BootSettings.TryGet(out _)) return Status.NotUsed;
 
             var first = EditorBuildSettings.scenes.FirstOrDefault(s => s.enabled && File.Exists(s.path));
             if (first != null && HasMarker(first.path))

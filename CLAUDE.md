@@ -21,20 +21,44 @@ Każdy moduł ma własne `.asmdef` (namespace = nazwa assembly).
 
 | Assembly | Ścieżka | Zawartość |
 |---|---|---|
-| `Core.Utilities` | `Runtime/Utilities` | singletony, `ScriptableObjectSettings`, eventy na SO, `UpdateManager`/`TimeCache`, rozszerzenia |
+| `Core.Utilities` | `Runtime/Utilities` | singletony, ustawienia `SettingsAsset` (opis niżej), eventy na SO, `UpdateManager`/`TimeCache`, rozszerzenia |
 | `Core.SaveSystem` | `Runtime/SaveSystem` | **nowy** system zapisu (opis niżej) |
 | `Core.Save` | `Runtime/Save` | **stary** system zapisu, `[Obsolete]` — zamrożony, bez żadnych zmian; nowy kod używa `Core.SaveSystem` |
 | `Core.Bootstrap` | `Runtime/Bootstrap` | start gry: `Boot`, `BootSettings`, kroki startowe (opis niżej) |
 | `Core.Pooling` | `Runtime/Pooling` | pule obiektów (+ `Editor/PoolDebugWindow`) |
 | `Core.UI` | `Runtime/UI` | `UIManager`, `UICanvas`, `UIPanel`, safe area, opcje ustawień (`Settings/Options`) |
 | `Core.InputSystemExtension` | `Runtime/InputSystemExtension` | `InputManager`, touch gamepad, on-screen stick/tap |
-| `Core.Editor` | `Editor` | narzędzia edytora: TimeTracker, Finder, ProjectSetup, podgląd ikon |
+| `Core.Editor` | `Editor` | narzędzia edytora: TimeTracker, Finder, ProjectSetup, podgląd ikon, Boot, ustawienia (`Editor/Settings`) |
 | `Core.SaveSystem.Tests` | `Tests/Runtime/SaveSystem` | testy PlayMode nowego zapisu |
-| `Core.Utilities.Tests` | `Tests/Runtime/Utilities` | testy PlayMode `Core.Utilities` (`Notices`) |
+| `Core.Utilities.Tests` | `Tests/Runtime/Utilities` | testy PlayMode `Core.Utilities` (`Notices`, `SettingsRegistry`) |
 | `Core.Bootstrap.Tests` | `Tests/Runtime/Bootstrap` | testy PlayMode `Boot` |
 
 Zależności spoza `package.json` (muszą być w projekcie gry): Input System, TextMeshPro, Odin Inspector (`Sirenix`,
 używany przez stary `Core.Save`, `Core.UI` i InputSystemExtension). Nowy kod nie powinien wprowadzać zależności od Odina.
+
+## Ustawienia (`Core.Utilities.Settings`)
+
+`SettingsAsset<T>` — jeden asset na typ, szukany **po typie** (`AssetDatabase.FindAssets`), więc plik można dowolnie
+przenosić i zmieniać mu nazwę. `T.Instance` / `T.TryGet(out t)` (to drugie nigdy nie tworzy assetu i nie rzuca).
+
+- Domyślnie **async**: w buildzie w Addressables pod labelem `Settings` (`SettingsRegistry.AddressablesLabel`),
+  ładowane przez `SettingsRegistry.LoadAllAsync()` — w Boot robi to splash task `LoadSettingsTask`. Odczyt przed
+  załadowaniem rzuca `InvalidOperationException` z opisem, co zrobić.
+- `[PreloadedSettings]` — w Player Settings › Preloaded Assets, w pamięci od startu (czytelne w `BeforeSceneLoad`,
+  np. `BootSettings`, `InputSystemSettings`). Wszystko, do czego się odwołuje, ładuje się razem z nim.
+- W edytorze każdy typ jest dostępny synchronicznie (`SettingsRegistry.EditorResolver` z `Editor/Settings`), asset
+  powstaje przy pierwszym `Instance` albo otwarciu strony w Project Settings — w `Assets/Settings` lub folderze z
+  `[SettingsPath]`, zawsze pod unikalną nazwą (nigdy nie nadpisuje pliku). W Play Mode edytor loguje błąd przy
+  odczycie, który w buildzie by rzucił: async w initializerach Boot (`SettingsRegistry.PreloadedOnly`), w trakcie
+  `LoadAllAsync` albo typ, którego `LoadAllAsync` nie załadował.
+- `SettingsAssetSync` (po kompilacji, przy utworzeniu assetu, przed buildem — `BuildPlayerProcessor` przed
+  Addressables — i z menu `Core/Settings/Sync Settings Assets`) trzyma asset tylko w jednym miejscu: Preloaded Assets
+  albo wpis Addressables (nowy w grupie `Settings`, adres = pełna nazwa typu). Duplikat: używany jest ten już
+  zarejestrowany, reszta jest wyrejestrowana z ostrzeżeniem. Przed buildem ostrzega o referencjach dających drugą
+  kopię (preloaded ← treść Addressables, async ← sceny buildu / preloaded) i o ciężkich zależnościach preloaded.
+- `[SettingsMenu("Game/Xyz")]` — strona w Project Settings (zamiast ręcznego `[SettingsProvider]`).
+- Stare `ScriptableObjectSettings<T>` i `ScriptableObjectPreloadedSettings<T>` są `[Obsolete]` (to drugie zostaje dla
+  `Core.Save`).
 
 ## Core.SaveSystem
 
@@ -68,8 +92,9 @@ klasę `[Serializable]`, bez zmian w Core:
 2. `BootService` — start w tle, nikt na nie nie czeka (auth, cloud, sklep, reklamy). Stan wystawiają same.
 3. `SplashTask` — asynchronicznie, **tylko w scenie z komponentem `BootScene`** (startuje je jego `Awake`), po kolei; `Required` (błąd → `SplashState.Failed`
    + `Boot.Retry()` wznawia od tego kroku) albo opcjonalne (log i dalej), `Timeout` liczony co klatkę. Ostatni,
-   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe: `InitializeAddressablesTask`,
-   `PreloadAddressablesLabelTask`.
+   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe: `InitializeAddressablesTask`, `LoadSettingsTask`
+   (ustawienia async — inspektor `BootSettings` ostrzega, gdy go brakuje), `PreloadAddressablesLabelTask`.
+   Initializery i synchroniczny start usług widzą tylko ustawienia `[PreloadedSettings]`.
 
 Scena startowa należy do gry (Animator, przycisk na cały ekran wołający `Boot.Continue()`, opcjonalnie
 `BootProgressView` z `Core.UI`) + znacznik `BootScene`. `BootSceneSetup` (`Editor/Boot`) pilnuje, żeby była pierwsza
@@ -129,10 +154,13 @@ Bez projektu gry: tymczasowy projekt Unity (w scratchpadzie) z `com.unity.test-f
 kopiuje się testowane moduły z ich asmdefami, i uruchomienie
 `Unity.exe -batchmode -nographics -projectPath <proj> -runTests -testPlatform PlayMode -testResults <xml>`.
 `Core.Utilities` w całości wymaga Odina, więc kopiuje się tylko potrzebne pliki do asmdefu `Core.Utilities` i dodaje
-stuby: `TimeCache` (`unscaledDeltaTime => Time.unscaledDeltaTime`) i `Sirenix.OdinInspector.ReadOnlyAttribute`
-(dla `SceneRef`). Manifest: test-framework, addressables, ugui + moduły `uielements`, `imgui`, `ui`,
-`jsonserialize`, `assetbundle`, `unitywebrequest`, `unitywebrequestassetbundle`.
+stuby: `TimeCache` (`unscaledDeltaTime => Time.unscaledDeltaTime`), `Sirenix.OdinInspector.ReadOnlyAttribute`
+(dla `SceneRef`) i `HideMonoScriptAttribute` (dla starego `ScriptableObjectSettings`). Manifest: test-framework,
+addressables, ugui + moduły `uielements`, `imgui`, `ui`, `jsonserialize`, `assetbundle`, `unitywebrequest`,
+`unitywebrequestassetbundle`.
 `-projectPath` musi być pełną ścieżką (`C:\Users\Użytkownik\...`), nie krótką 8.3 (`UYTKOW~1`) — inaczej Unity nie
 mapuje skryptów na klasy (`MonoScript.GetClass()` zwraca null) i np. zapisuje sceny z wbudowanym `MonoScript`.
+To samo (asset z `m_Script: {fileID: 0}`, niewidoczny dla `FindAssets("t:Typ")`) dzieje się, gdy klasa
+`ScriptableObject` nie leży w pliku o swojej nazwie — także w testach i skryptach sprawdzających.
 Scenariusze edytorowe (Build Settings, tworzenie scen) sprawdza się skryptem przez `-executeMethod`, nie testami w
 repo — testy w repo uruchamiane w projekcie gry nie mogą zmieniać jego Build Settings.

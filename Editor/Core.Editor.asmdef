@@ -3,7 +3,10 @@
     "rootNamespace": "Core.Editor",
     "references": [
         "Core.Utilities",
-        "Core.Bootstrap"
+        "Core.Bootstrap",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [
         "Editor"
