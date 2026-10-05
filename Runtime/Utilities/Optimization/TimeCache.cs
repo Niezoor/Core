@@ -8,6 +8,7 @@ namespace Core.Utilities.Optimization
     public class TimeCache : PersistentSingleton<TimeCache>
     {
         [ShowInInspector, ReadOnly] public static float deltaTime;
+        [ShowInInspector, ReadOnly] public static float unscaledDeltaTime;
         [ShowInInspector, ReadOnly] public static float fixedDeltaTime;
         [ShowInInspector, ReadOnly] public static float time;
 
@@ -20,6 +21,7 @@ namespace Core.Utilities.Optimization
         private void Start()
         {
             deltaTime = Time.deltaTime;
+            unscaledDeltaTime = Time.unscaledDeltaTime;
             fixedDeltaTime = Time.fixedDeltaTime;
             time = Time.time;
         }
@@ -29,6 +31,7 @@ namespace Core.Utilities.Optimization
             base.OnDestroy();
             time = 0;
             deltaTime = 0;
+            unscaledDeltaTime = 0;
         }
 
         private void FixedUpdate()
@@ -39,6 +42,7 @@ namespace Core.Utilities.Optimization
         private void Update()
         {
             deltaTime = Time.deltaTime;
+            unscaledDeltaTime = Time.unscaledDeltaTime;
             time = Time.time;
 #if UNITY_EDITOR
             EditorUtility.SetDirty(this);

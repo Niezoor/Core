@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "displayName": "Core",
   "description": "Core multiplatform game functionality",
-  "unity": "2022.3",
+  "unity": "6000.0",
   "dependencies": {
     "com.unity.addressables": "1.21.21",
     "com.unity.localization": "1.4.5"
