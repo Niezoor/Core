@@ -5,6 +5,7 @@ using UnityEngine;
 namespace Core.Save
 {
     [Serializable]
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public abstract class SaveData
     {
         protected abstract string Key { get; }

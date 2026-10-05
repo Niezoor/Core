@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace Core.Save.Storages
 {
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public class FileStorage : Storage
     {
         [ShowInInspector] private static string Path => Application.persistentDataPath + "/local.save";

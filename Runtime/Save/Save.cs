@@ -9,6 +9,7 @@ using UnityEngine;
 namespace Core.Save
 {
     //[ExecuteAlways]
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public class Save : PersistentSingleton<Save>
     {
         public static Action OnLoaded;

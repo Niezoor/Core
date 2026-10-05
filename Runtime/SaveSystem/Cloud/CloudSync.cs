@@ -51,7 +51,9 @@ namespace Core.SaveSystem.Cloud
             }
             catch (Exception exception)
             {
-                return Finish(CloudSyncResult.Failed, $"{Provider.Name}: {exception.GetType().Name}: {exception.Message}");
+                // A provider that no longer counts itself available lost the connection mid-sync - offline, not broken.
+                var result = Provider.IsAvailable ? CloudSyncResult.Failed : CloudSyncResult.Unavailable;
+                return Finish(result, $"{Provider.Name}: {exception.GetType().Name}: {exception.Message}");
             }
             finally
             {

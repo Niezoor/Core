@@ -3,6 +3,8 @@
     "rootNamespace": "Core.SaveSystem.Tests",
     "references": [
         "Core.SaveSystem",
+        "Core.Bootstrap",
+        "Core.Utilities",
         "UnityEngine.TestRunner"
     ],
     "includePlatforms": [],

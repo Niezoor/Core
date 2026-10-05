@@ -28,6 +28,24 @@ namespace Core.Utilities.Settings
         }
 
 
+        /// <summary>The settings when the project has them, without creating the asset like <see cref="Instance"/>.</summary>
+        public static bool TryGetExisting(out T settings)
+        {
+            if (!instance)
+            {
+#if UNITY_EDITOR
+                EditorBuildSettings.TryGetConfigObject($"com.core.{typeof(T).Name}", out instance);
+                if (!instance) TryLoadAsset();
+                if (instance) ResetOnPlayModeChange();
+#else
+                instance = Resources.FindObjectsOfTypeAll<T>().FirstOrDefault();
+#endif
+            }
+
+            settings = instance;
+            return settings;
+        }
+
         private static void GetOrCreateDefault()
         {
 #if UNITY_EDITOR

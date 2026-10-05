@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Core.Utilities
 {
@@ -8,31 +8,32 @@ namespace Core.Utilities
         public T Editor;
         public T Android;
         public T IOS;
+        public T WebGL;
         public T Windows;
         public T Linux;
         public T MacOS;
 
+        /// <summary>The value for the running platform; <see cref="Editor"/> on any platform not listed.</summary>
         public T Value
         {
             get
             {
 #if UNITY_EDITOR
                 return Editor;
-#endif
-#if UNITY_ANDROID
+#elif UNITY_ANDROID
                 return Android;
-#endif
-#if UNITY_IOS
-                return IOS
-#endif
-#if UNITY_STANDALONE_WIN
+#elif UNITY_IOS
+                return IOS;
+#elif UNITY_WEBGL
+                return WebGL;
+#elif UNITY_STANDALONE_WIN
                 return Windows;
-#endif
-#if UNITY_STANDALONE_LINUX
+#elif UNITY_STANDALONE_LINUX
                 return Linux;
-#endif
-#if UNITY_STANDALONE_OSX
+#elif UNITY_STANDALONE_OSX
                 return MacOS;
+#else
+                return Editor;
 #endif
             }
         }

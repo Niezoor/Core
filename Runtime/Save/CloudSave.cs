@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace Core.Save
 {
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public abstract class CloudSave
     {
         public abstract event Action<CloudSave> onConflict;

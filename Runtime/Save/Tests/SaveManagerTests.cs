@@ -4,6 +4,7 @@ using UnityEngine.Profiling;
 
 namespace Core.Save.Tests
 {
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public class SaveManagerTests : MonoBehaviour
     {
         public string value = "someting";

@@ -22,6 +22,7 @@ namespace Core.Utilities
         [SerializeField] private bool isAddressable;
 
         public string ScenePath => scenePath;
+        public bool IsAddressable => isAddressable;
 
         private AsyncOperationHandle<SceneInstance> handle;
 

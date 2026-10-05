@@ -15,6 +15,8 @@ namespace Core.SaveSystem.Cloud
     {
         public static event Action<CloudConflict> ConflictDetected;
         public static event Action<CloudSyncResult> SyncFinished;
+        /// <summary>Raised before <see cref="SyncFinished"/>, so its handlers already see the new status.</summary>
+        public static event Action<CloudStatus> StatusChanged;
 
         public static bool AutoSync { get; set; } = true;
         /// <summary>Seconds between automatic uploads while the save keeps changing.</summary>
@@ -25,6 +27,7 @@ namespace Core.SaveSystem.Cloud
 
         public static ICloudSaveProvider Provider { get; private set; }
         public static bool IsEnabled => Provider != null;
+        public static CloudStatus Status { get; private set; }
         public static bool IsSyncing => sync?.IsSyncing ?? false;
         public static CloudConflict PendingConflict => sync?.PendingConflict;
         public static CloudSyncResult? LastResult => sync?.LastResult;
@@ -45,8 +48,16 @@ namespace Core.SaveSystem.Cloud
                 if (sync != null || Provider == null) return sync;
 
                 sync = new CloudSync(Save.Store, Provider);
-                sync.ConflictDetected += conflict => ConflictDetected?.Invoke(conflict);
-                sync.SyncFinished += result => SyncFinished?.Invoke(result);
+                sync.ConflictDetected += conflict =>
+                {
+                    SetStatus(CloudStatus.Conflict);
+                    ConflictDetected?.Invoke(conflict);
+                };
+                sync.SyncFinished += result =>
+                {
+                    SetStatus(StatusAfter(result));
+                    SyncFinished?.Invoke(result);
+                };
                 Save.Flushed += OnLocalSaveWritten;
                 return sync;
             }
@@ -72,6 +83,7 @@ namespace Core.SaveSystem.Cloud
             providerPriority = priority;
             dueAt = Time.realtimeSinceStartup;
             if (!runner && Application.isPlaying) runner = CloudSaveRunner.Create();
+            SetStatus(CloudStatus.Loading);
         }
 
         public static async Awaitable<CloudSyncResult> SyncAsync(CancellationToken cancellationToken = default)
@@ -148,6 +160,33 @@ namespace Core.SaveSystem.Cloud
             }
         }
 
+        private static CloudStatus StatusAfter(CloudSyncResult result)
+        {
+            switch (result)
+            {
+                case CloudSyncResult.UpToDate:
+                case CloudSyncResult.Uploaded:
+                case CloudSyncResult.Downloaded:
+                    return CloudStatus.Synced;
+                case CloudSyncResult.Conflict:
+                    return CloudStatus.Conflict;
+                case CloudSyncResult.Unavailable:
+                    return CloudStatus.Offline;
+                case CloudSyncResult.Failed:
+                    return CloudStatus.Error;
+                default:
+                    // Skipped only reports when the local save is read-only, which no later sync will fix.
+                    return sync.LastError != null ? CloudStatus.Error : Status;
+            }
+        }
+
+        private static void SetStatus(CloudStatus status)
+        {
+            if (Status == status) return;
+            Status = status;
+            StatusChanged?.Invoke(status);
+        }
+
         private static void OnLocalSaveWritten()
         {
             if (dueAt != null || sync == null || sync.PendingConflict != null || !Save.HasUnsyncedChanges) return;
@@ -173,6 +212,8 @@ namespace Core.SaveSystem.Cloud
             if (sync != null) Save.Flushed -= OnLocalSaveWritten;
             ConflictDetected = null;
             SyncFinished = null;
+            StatusChanged = null;
+            Status = CloudStatus.Disabled;
             AutoSync = true;
             MinSyncInterval = 60f;
             RetryDelay = 30f;

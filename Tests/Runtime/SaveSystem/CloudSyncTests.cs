@@ -1,6 +1,9 @@
 using System;
+using System.IO;
+using System.Threading;
 using Core.SaveSystem.Cloud;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Core.SaveSystem.Tests
 {
@@ -248,6 +251,42 @@ namespace Core.SaveSystem.Tests
             cloud.FailUploads = false;
             Assert.AreEqual(CloudSyncResult.Uploaded, Sync());
             Assert.IsFalse(store.HasUnsyncedChanges);
+        }
+
+        /// <summary>Signed in when the sync starts, gone by the time the download runs.</summary>
+        private sealed class DroppingProvider : ICloudSaveProvider
+        {
+            public bool Dropped;
+            public string Name => "Dropping cloud";
+            public bool IsAvailable => !Dropped;
+
+            public Awaitable<bool> SignInAsync(CancellationToken cancellationToken) => Done(!Dropped);
+
+            public Awaitable<string> DownloadAsync(CancellationToken cancellationToken)
+            {
+                Dropped = true;
+                throw new IOException("connection reset");
+            }
+
+            public Awaitable UploadAsync(SaveSnapshot snapshot, CancellationToken cancellationToken) =>
+                throw new NotSupportedException();
+
+            private static Awaitable<T> Done<T>(T value)
+            {
+                var source = new AwaitableCompletionSource<T>();
+                source.SetResult(value);
+                return source.Awaitable;
+            }
+        }
+
+        [Test]
+        public void ConnectionLostMidSyncIsUnavailableNotFailed()
+        {
+            SetLocal(1);
+            var dropping = new CloudSync(store, new DroppingProvider());
+
+            Assert.AreEqual(CloudSyncResult.Unavailable, dropping.SyncAsync().Completed());
+            StringAssert.Contains("connection reset", dropping.LastError);
         }
 
         [Test]

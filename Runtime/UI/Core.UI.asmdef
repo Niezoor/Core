@@ -5,7 +5,8 @@
         "Core.Pooling",
         "Core.Utilities",
         "Unity.TextMeshPro",
-        "Unity.Localization"
+        "Unity.Localization",
+        "Core.Bootstrap"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

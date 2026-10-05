@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using Core.SaveSystem.Backends;
 using Core.SaveSystem.Cloud;
@@ -112,6 +113,95 @@ namespace Core.SaveSystem.Tests
             cloud.Online = true;
 
             yield return WaitUntil(() => cloud.Uploads == 1);
+        }
+
+        [Test]
+        public void StatusIsDisabledWithoutAProvider()
+        {
+            Assert.AreEqual(CloudStatus.Disabled, CloudSave.Status);
+        }
+
+        [UnityTest]
+        public IEnumerator StatusGoesFromLoadingToSynced()
+        {
+            var changes = new List<CloudStatus>();
+            CloudSave.StatusChanged += changes.Add;
+            CloudStatus seenBySyncFinished = default;
+            CloudSave.SyncFinished += _ => seenBySyncFinished = CloudSave.Status;
+
+            Save.Set("progress", new Progress { Level = 1 });
+            CloudSave.Register(cloud);
+            Assert.AreEqual(CloudStatus.Loading, CloudSave.Status);
+
+            yield return WaitUntil(() => cloud.Uploads == 1);
+            Assert.AreEqual(CloudStatus.Synced, CloudSave.Status);
+            Assert.AreEqual(CloudStatus.Synced, seenBySyncFinished);
+            CollectionAssert.AreEqual(new[] { CloudStatus.Loading, CloudStatus.Synced }, changes);
+        }
+
+        [UnityTest]
+        public IEnumerator RoutineSyncsDoNotChangeTheStatus()
+        {
+            CloudSave.AutoSync = false;
+            CloudSave.Register(cloud);
+            Save.Set("progress", new Progress { Level = 1 });
+            yield return CloudSave.SyncAsync().Wait(_ => { });
+
+            var changes = new List<CloudStatus>();
+            CloudSave.StatusChanged += changes.Add;
+            Save.Set("progress", new Progress { Level = 2 });
+            var sync = CloudSave.SyncAsync();
+            Assert.IsTrue(CloudSave.IsSyncing);
+            Assert.AreEqual(CloudStatus.Synced, CloudSave.Status);
+            yield return sync.Wait(_ => { });
+
+            Assert.IsEmpty(changes);
+        }
+
+        [UnityTest]
+        public IEnumerator StatusIsOfflineUntilTheServiceComesBack()
+        {
+            CloudSave.RetryDelay = 0.3f;
+            cloud.Online = false;
+            CloudSave.Register(cloud);
+
+            yield return WaitUntil(() => CloudSave.Status == CloudStatus.Offline);
+            cloud.Online = true;
+
+            yield return WaitUntil(() => CloudSave.Status == CloudStatus.Synced);
+        }
+
+        [UnityTest]
+        public IEnumerator StatusIsErrorWhenTheCloudSaveIsUnreadable()
+        {
+            CloudSave.AutoSync = false;
+            cloud.CloudText = "not a save";
+            CloudSave.Register(cloud);
+
+            CloudSyncResult result = default;
+            yield return CloudSave.SyncAsync().Wait(r => result = r);
+
+            Assert.AreEqual(CloudSyncResult.Failed, result);
+            Assert.AreEqual(CloudStatus.Error, CloudSave.Status);
+        }
+
+        [UnityTest]
+        public IEnumerator StatusShowsAConflictUntilItIsResolved()
+        {
+            Save.Set("progress", new Progress { Level = 1 });
+            CloudSave.Register(cloud);
+            yield return WaitUntil(() => cloud.Uploads == 1);
+
+            cloud.SaveFromOtherDevice(other => other.Set("progress", new Progress { Level = 5 }));
+            CloudStatus seenByConflictDetected = default;
+            CloudSave.ConflictDetected += _ => seenByConflictDetected = CloudSave.Status;
+            yield return CloudSave.SyncAsync().Wait(_ => { });
+
+            Assert.AreEqual(CloudStatus.Conflict, CloudSave.Status);
+            Assert.AreEqual(CloudStatus.Conflict, seenByConflictDetected);
+
+            yield return CloudSave.ResolveConflictAsync(CloudConflictChoice.KeepLocal).Wait(_ => { });
+            Assert.AreEqual(CloudStatus.Synced, CloudSave.Status);
         }
 
         [Test]

@@ -2,7 +2,8 @@
     "name": "Core.SaveSystem",
     "rootNamespace": "Core.SaveSystem",
     "references": [
-        "Core.Utilities"
+        "Core.Utilities",
+        "Core.Bootstrap"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

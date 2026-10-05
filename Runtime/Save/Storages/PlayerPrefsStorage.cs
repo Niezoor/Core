@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Core.Save.Storages
 {
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public class PlayerPrefsStorage : Storage
     {
         public override void Load(Action onLoad)

@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Core.Save.Storages
 {
+    [System.Obsolete("Core.Save is replaced by Core.SaveSystem (Save, SaveStore). Kept only for existing games.")]
     public abstract class Storage : MonoBehaviour
     {
         public event Action OnLoaded;
