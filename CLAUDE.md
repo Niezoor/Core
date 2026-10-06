@@ -23,15 +23,22 @@ Każdy moduł ma własne `.asmdef` (namespace = nazwa assembly).
 |---|---|---|
 | `Core.Utilities` | `Runtime/Utilities` | singletony, ustawienia `SettingsAsset` (opis niżej), eventy na SO, `UpdateManager`/`TimeCache`, rozszerzenia |
 | `Core.SaveSystem` | `Runtime/SaveSystem` | **nowy** system zapisu (opis niżej) |
+| `Core.Display` | `Runtime/Display` | `ScreenProfile` — ekran w kategoriach układu (opis niżej), bez zależności |
 | `Core.Save` | `Runtime/Save` | **stary** system zapisu, `[Obsolete]` — zamrożony, bez żadnych zmian; nowy kod używa `Core.SaveSystem` |
 | `Core.Bootstrap` | `Runtime/Bootstrap` | start gry: `Boot`, `BootSettings`, kroki startowe (opis niżej) |
 | `Core.Pooling` | `Runtime/Pooling` | pule obiektów (+ `Editor/PoolDebugWindow`) |
-| `Core.UI` | `Runtime/UI` | `UIManager`, `UICanvas`, `UIPanel`, safe area, opcje ustawień (`Settings/Options`) |
+| `Core.UI` | `Runtime/UI` | **stary** UI (uGUI): `UIManager`, `UICanvas`, `UIPanel`, safe area, `OptionsFactory` — zostaje, nowy kod używa `Core.UISystem` |
+| `Core.UISystem` | `Runtime/UISystem` | **nowy** UI na UI Toolkit: stos ekranów, wejście, `SafeArea`, inspektor runtime, menu debugowe (opis niżej) |
+| `Core.UISystem.UGUI` | `Runtime/UISystem/UGUI` | adaptery dla HUD gier w uGUI: `ProfileVisibility`, `SafeAreaFitter`, `ProfileCanvasScaler` |
 | `Core.InputSystemExtension` | `Runtime/InputSystemExtension` | `InputManager`, touch gamepad, on-screen stick/tap |
-| `Core.Editor` | `Editor` | narzędzia edytora: TimeTracker, Finder, ProjectSetup, podgląd ikon, Boot, ustawienia (`Editor/Settings`) |
+| `Core.Editor` | `Editor` | narzędzia edytora: TimeTracker, Finder, ProjectSetup, podgląd ikon, Boot, ustawienia (`Editor/Settings`), przyciski `[Button]` (`Editor/Inspector`) |
+| `Core.Editor.Odin` | `Editor/Odin` | tylko z Odinem (`ODIN_INSPECTOR`): `[Button]` z Core rysowany przez Odina |
+| `Core.UISystem.Editor` | `Editor/UISystem` | rejestr ekranów (parowanie klasa ↔ UXML), `Create › Core › UI Screen`, link.xml ekranów |
+| `Core.UISystem.Tests` | `Tests/Runtime/UISystem` | testy PlayMode stosu ekranów, inspektora, menu debugowego |
 | `Core.SaveSystem.Tests` | `Tests/Runtime/SaveSystem` | testy PlayMode nowego zapisu |
 | `Core.Utilities.Tests` | `Tests/Runtime/Utilities` | testy PlayMode `Core.Utilities` (`Notices`, `SettingsRegistry`) |
 | `Core.Bootstrap.Tests` | `Tests/Runtime/Bootstrap` | testy PlayMode `Boot` |
+| `Core.Display.Tests` | `Tests/Runtime/Display` | testy PlayMode `ScreenProfile` |
 
 Zależności spoza `package.json` (muszą być w projekcie gry): Input System, TextMeshPro, Odin Inspector (`Sirenix`,
 używany przez stary `Core.Save`, `Core.UI` i InputSystemExtension). Nowy kod nie powinien wprowadzać zależności od Odina.
@@ -59,6 +66,73 @@ przenosić i zmieniać mu nazwę. `T.Instance` / `T.TryGet(out t)` (to drugie ni
 - `[SettingsMenu("Game/Xyz")]` — strona w Project Settings (zamiast ręcznego `[SettingsProvider]`).
 - Stare `ScriptableObjectSettings<T>` i `ScriptableObjectPreloadedSettings<T>` są `[Obsolete]` (to drugie zostaje dla
   `Core.Save`).
+
+## Przyciski w inspektorze (`Core.Utilities.Inspector`)
+
+`[Button]` / `[Button("Etykieta", Mode = ButtonMode.PlayMode)]` na metodzie (też prywatnej, statycznej, z klasy
+bazowej; parametry dostają pola, wynik ≠ void idzie do logu, `IEnumerator` w Play Mode startuje jako korutyna).
+Osobny namespace, bo pliki z `using Core.Utilities;` + `using Sirenix.OdinInspector;` dostałyby niejednoznaczny
+`[Button]`. `ButtonMethods` (runtime) wyszukuje i wywołuje — wspólne dla edytora i przyszłego inspektora w grze.
+Rysowanie: `Editor/Inspector/InspectorButtons` — fallback editor (UI Toolkit) dla MonoBehaviour/ScriptableObject bez
+własnego edytora; własny edytor dodaje je przez `InspectorButtons.Create(targets)`. Z Odinem rysuje Odin:
+`Editor/Odin` (assembly z `defineConstraints: ODIN_INSPECTOR`) zamienia atrybut na odinowy `[Button]`.
+
+## Ekran (`Core.Display`)
+
+`ScreenProfile.Current` (`ScreenState`) — ekran w kategoriach układu, nie pikseli; podstawa nowego UI (UI Toolkit:
+klasy USS, warianty UXML, skala `PanelSettings`; uGUI: adaptery dla HUD).
+
+- `SizeClass` (Compact/Medium/Expanded) z **krótszego boku w dp** — progi `SizeClassThresholds` (domyślnie 600/900),
+  ta sama klasa w obu orientacjach; `Orientation`; `IsMobile` (`Application.isMobilePlatform`).
+- Dp: `Density` = px na dp — `Screen.dpi / 160` na mobile, `/ 96` na desktopie (konwencje platform), na WebGL
+  szerokość canvasu / jego szerokość w pikselach CSS (`Plugins/WebGL/CoreDisplay.jslib`, `Screen.dpi` w przeglądarce
+  jest niewiarygodne); nieznane dpi → 1. `UserScale` (ustawienie gracza, 0.5–3) wchodzi w `Scale` i w wymiary w dp,
+  więc większe UI może zmienić klasę na mniejszą. `SafeInsets` w px od każdej krawędzi.
+- Eventy: `ClassChanged` (klasa/orientacja/rodzaj urządzenia — przełączanie wariantów), potem `Changed` (cokolwiek —
+  rozmiar, safe area, skala). Wyjątek w jednym listenerze nie blokuje reszty. Odświeżane co klatkę przez
+  `ScreenProfileRunner` (`DefaultExecutionOrder(-10000)`); poza Play Mode `Current` czyta ekran przy każdym odczycie.
+- `ScreenProfile.Evaluate(metrics, thresholds, userScale)` — czysta funkcja do testów; `Override(ScreenMetrics)` /
+  `ClearOverride()` udaje inny ekran (testy, menu debugowe).
+- Namespace `Core.Display` przesłania `UnityEngine.Display` w kodzie pod `namespace Core…` — tam pisać
+  `UnityEngine.Display`.
+
+## Core.UISystem (UI Toolkit)
+
+Ekran = klasa `UIScreen` (logika) + UXML (wygląd). `Create › Core › UI Screen` tworzy `.cs`/`.uxml`/`.uss`; po
+kompilacji `ScreenRegistry` paruje klasę z UXML o tej samej nazwie w `UISystemSettings` (Project Settings › Core ›
+UI System; tam też warianty UXML per `ScreenCondition`, PanelSettings, style gry). Ekran bez UXML nadpisuje
+`CreateView()`.
+
+- `Screens.Push<T>(setup)` (setup przed budową widoku — argumenty), `Replace`, `Close`, `CloseAbove`, `Clear`
+  (natychmiast, bez przejść; też przy `Boot.Restarting`), `Back`, `Get<T>`, `IsPointerOverUI`. Eventy `Opened`,
+  `Closed`, `TopChanged`, `BackUnhandled` (back na ostatnim ekranie — np. pytanie o wyjście).
+- `ScreenKind`: `Screen` (chowa niższe), `Popup` (niższe widoczne, scrim blokuje kliki, `CloseOnScrimClick`),
+  `Overlay` (poza stosem, bez fokusu i back, kliki przechodzą). Pusty obszar `Screen` przepuszcza kliki do gry.
+- Lifecycle (`protected virtual`, Screens woła przez `Invoke*`): `OnCreate` (po zbudowaniu widoku, też po zmianie
+  wariantu), `OnShow`/`OnHide`, `OnFocus`/`OnBlur` (szczyt stosu), `OnDestroy`, `OnBack` (domyślnie zamyka, chyba
+  że to ostatni ekran). Callbacki synchronicznie; przejścia potem (`AnimateAsync`, domyślnie klasa
+  `ui-screen--hidden` + przejścia USS, czekanie w czasie rzeczywistym, max 2 s). Wyjątek w callbacku jest logowany,
+  stos zostaje spójny. `KeepAlive` — instancja i widok zostają po zamknięciu i wracają przy następnym `Push`.
+- `UIScreen<TResult>`: `Close(result)` + `await screen.WaitForResultAsync()` (każdy czekający osobno; bez wyniku →
+  `default`).
+- Panel: jeden `UIDocument` (`[UISystem]`, DontDestroyOnLoad) tworzony przy pierwszym użyciu; kopia `PanelSettings`
+  (nigdy nie modyfikujemy assetu), skala `ScreenProfile.Scale` (UXML w dp), domyślny motyw z
+  `Resources/CoreUISystem/DefaultTheme.tss` + `UISystem.uss`. Na roocie klasy `ui-size-*`, `ui-portrait`/`-landscape`,
+  `ui-mobile`/`-desktop`, `ui-input-*` (+ `ui-input-navigation`) — responsywność przez USS.
+- `UIInput`: `Mode` (Touch/Pointer/Keyboard/Gamepad — ostatnie użyte urządzenie; klawiatura tylko klawiszami
+  nawigacji), `BackPressed` (Esc = też Android back, pad B). Input System (`CORE_INPUT_SYSTEM` z `versionDefines`) albo
+  stary Input Manager. Runner (`UISystemRunner`, od `BeforeSceneLoad`) kieruje back do menu debugowego albo stosu.
+- Fokus tylko w trybie klawiatura/pad: `DefaultFocus` albo pierwszy element, zapamiętany ostatni po powrocie;
+  nawigacja do zasłoniętego ekranu wraca na szczyt. Ustawiany klatkę później (styl musi się rozwiązać).
+- `SafeArea` (`[UxmlElement]`, padding z `SafeInsets` per krawędź), `StartScreen` (komponent: ekran przy starcie sceny).
+- Inspektor runtime: model w `Core.Utilities.Inspector` (`InspectorModel`/`InspectorMember` — pola jak inspektor Unity,
+  `[Inspect(Label, ReadOnly, Min, Max, OnChanged)]` dla właściwości/pól runtime, `[Button]`; struktury i elementy list
+  edytowane w miejscu), widok `InspectorView` (UI Toolkit, odświeżany co 250 ms, kontrolki z `InspectorControls`,
+  własne przez `Register`). `DebugMenu`: ` (backquote), oba drążki pada, 3 palce; `Register("Folder/Strona", obj)`;
+  wbudowane: Screen (podgląd profili), Time, UI Screens, Scene Hierarchy, Settings (`SettingsRegistry.Loaded`). Osobny
+  panel z własnym USS i skalą bez `UserScale`; tylko dev build/edytor, chyba że `debugMenuInRelease`.
+- IL2CPP: `IUnityLinkerProcessor` dopisują link.xml dla `[Button]`, `[Inspect]` (`Core.Editor`) i klas `UIScreen`
+  (`Core.UISystem.Editor`) — wołane tylko refleksją.
 
 ## Core.SaveSystem
 
@@ -158,6 +232,9 @@ stuby: `TimeCache` (`unscaledDeltaTime => Time.unscaledDeltaTime`), `Sirenix.Odi
 (dla `SceneRef`) i `HideMonoScriptAttribute` (dla starego `ScriptableObjectSettings`). Manifest: test-framework,
 addressables, ugui + moduły `uielements`, `imgui`, `ui`, `jsonserialize`, `assetbundle`, `unitywebrequest`,
 `unitywebrequestassetbundle`.
+Przed pierwszym uruchomieniem projekt potrzebuje `ProjectSettings/ProjectVersion.txt` (`m_EditorVersion: …`), a
+`manifest.json` musi być bez BOM — inaczej Unity traktuje go jako nowy projekt i nadpisuje manifest szablonem (Ads,
+IAP z Mobile Dependency Resolverem, który zapętla się na „Ż” w ścieżce i testy nie ruszają).
 `-projectPath` musi być pełną ścieżką (`C:\Users\Użytkownik\...`), nie krótką 8.3 (`UYTKOW~1`) — inaczej Unity nie
 mapuje skryptów na klasy (`MonoScript.GetClass()` zwraca null) i np. zapisuje sceny z wbudowanym `MonoScript`.
 To samo (asset z `m_Script: {fileID: 0}`, niewidoczny dla `FindAssets("t:Typ")`) dzieje się, gdy klasa

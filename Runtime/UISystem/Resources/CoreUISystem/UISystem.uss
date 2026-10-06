@@ -1,0 +1,58 @@
+/* Base layout of Core.UISystem. Games restyle any of it from their own style sheets (UISystemSettings). */
+
+.ui-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.ui-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.ui-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 1;
+    transition-property: opacity;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out;
+}
+
+.ui-screen--hidden {
+    opacity: 0;
+}
+
+.ui-screen--screen > .ui-screen__view {
+    flex-grow: 1;
+}
+
+.ui-screen--popup {
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.ui-screen--popup > .ui-screen__view {
+    scale: 1 1;
+    transition-property: scale;
+    transition-duration: 0.15s;
+    transition-timing-function: ease-out-back;
+}
+
+.ui-screen--popup.ui-screen--hidden > .ui-screen__view {
+    scale: 0.9 0.9;
+}
+
+.ui-safe-area {
+    flex-grow: 1;
+}

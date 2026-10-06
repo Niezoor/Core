@@ -1,0 +1,25 @@
+{
+    "name": "Core.UISystem",
+    "rootNamespace": "Core.UISystem",
+    "references": [
+        "Core.Display",
+        "Core.Utilities",
+        "Core.Bootstrap",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "1.4.0",
+            "define": "CORE_INPUT_SYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

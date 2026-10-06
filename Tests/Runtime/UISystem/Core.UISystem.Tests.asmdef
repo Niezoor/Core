@@ -1,0 +1,23 @@
+{
+    "name": "Core.UISystem.Tests",
+    "rootNamespace": "Core.UISystem.Tests",
+    "references": [
+        "Core.UISystem",
+        "Core.Display",
+        "Core.Utilities",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

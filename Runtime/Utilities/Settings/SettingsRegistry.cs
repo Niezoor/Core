@@ -49,6 +49,18 @@ namespace Core.Utilities.Settings
 
         public static bool IsPreloaded(Type type) => type.IsDefined(typeof(PreloadedSettingsAttribute), false);
 
+        /// <summary>Every settings asset read or loaded so far, e.g. for a debug menu.</summary>
+        public static IEnumerable<SettingsAsset> Loaded
+        {
+            get
+            {
+                foreach (var asset in settings.Values)
+                {
+                    if (asset) yield return asset;
+                }
+            }
+        }
+
         /// <summary>
         /// Loads every async settings asset (those under <see cref="AddressablesLabel"/>) and keeps it for the rest of
         /// the run. Can be called again and from several places at once; after a failure the next call tries again.

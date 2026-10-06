@@ -1,0 +1,21 @@
+{
+    "name": "Core.UISystem.Editor",
+    "rootNamespace": "Core.UISystem.Editor",
+    "references": [
+        "Core.UISystem",
+        "Core.Display",
+        "Core.Utilities",
+        "Core.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

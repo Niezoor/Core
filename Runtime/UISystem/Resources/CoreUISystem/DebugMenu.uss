@@ -1,0 +1,137 @@
+/* Debug menu. Separate panel and style sheet, so the game's theme never changes it. */
+
+.dbg-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: row;
+    justify-content: flex-end;
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.dbg-panel {
+    width: 420px;
+    height: 100%;
+    background-color: rgba(24, 26, 30, 0.97);
+    border-left-width: 1px;
+    border-left-color: rgb(60, 64, 72);
+    padding: 6px;
+    color: rgb(225, 228, 232);
+}
+
+.ui-size-compact .dbg-panel {
+    width: 100%;
+    border-left-width: 0;
+}
+
+.dbg-header {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    min-height: 40px;
+}
+
+.dbg-header__title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    margin: 0 6px;
+    color: rgb(225, 228, 232);
+}
+
+.dbg-header__button {
+    width: 40px;
+    height: 36px;
+    margin: 0;
+}
+
+.dbg-search {
+    flex-shrink: 0;
+    margin: 4px 0;
+}
+
+.dbg-content {
+    flex-grow: 1;
+}
+
+.dbg-item {
+    min-height: 40px;
+    margin: 1px 0;
+    -unity-text-align: middle-left;
+    padding-left: 10px;
+}
+
+.dbg-section {
+    -unity-font-style: bold;
+    margin: 10px 0 2px 2px;
+    color: rgb(150, 160, 175);
+}
+
+.dbg-root Label {
+    color: rgb(225, 228, 232);
+}
+
+.dbg-root .ui-inspector__field {
+    min-height: 32px;
+    margin: 1px 0;
+}
+
+.ui-inspector__header {
+    -unity-font-style: bold;
+    margin: 10px 0 2px 2px;
+}
+
+.ui-inspector__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.ui-inspector__label {
+    width: 40%;
+    flex-shrink: 0;
+    padding-left: 3px;
+}
+
+.ui-inspector__value {
+    flex-grow: 1;
+    flex-shrink: 1;
+    -unity-text-align: middle-left;
+    overflow: hidden;
+}
+
+.ui-inspector__button {
+    min-height: 36px;
+}
+
+.ui-inspector__method {
+    border-width: 1px;
+    border-color: rgb(60, 64, 72);
+    border-radius: 3px;
+    padding: 4px;
+    margin: 3px 0;
+}
+
+.ui-inspector__color {
+    flex-direction: row;
+    align-items: center;
+}
+
+.ui-inspector__color > .ui-inspector__field {
+    flex-grow: 1;
+}
+
+.ui-inspector__swatch {
+    width: 28px;
+    height: 20px;
+    margin-left: 4px;
+    border-radius: 3px;
+}
+
+.ui-inspector__empty {
+    margin: 8px 2px;
+    color: rgb(150, 160, 175);
+}
