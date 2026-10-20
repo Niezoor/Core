@@ -12,17 +12,23 @@ namespace Core.Editor.TimeTracker
         private static readonly TimeSpan maxDeltaTime = TimeSpan.FromMinutes(1);
         private static readonly TimeSpan saveInterval = TimeSpan.FromMinutes(1);
 
-        public static bool Paused { get; private set; }
+        // SessionState survives domain reloads (recompiles) but resets when the Editor restarts.
+        private const string PausedKey = "Core.TimeTracker.Paused";
+
+        public static bool Paused
+        {
+            get => SessionState.GetBool(PausedKey, false);
+            private set => SessionState.SetBool(PausedKey, value);
+        }
 
         static TimeTrackerUpdater()
         {
             lastSaveTime = DateTime.Now;
             prevUpdateTime = DateTime.Now;
             EditorApplication.update -= UpdateTime;
-            EditorApplication.update += UpdateTime;
+            if (!Paused) EditorApplication.update += UpdateTime;
             EditorApplication.quitting -= SaveTimeData;
             EditorApplication.quitting += SaveTimeData;
-            Paused = false;
         }
 
         public static void Pause()
