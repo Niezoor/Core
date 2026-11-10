@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Core.Bootstrap
 {
-    /// <summary>What <see cref="Boot"/> runs, in Project Settings &gt; Core &gt; Boot. Preloaded, so it is there before
-    /// anything else loads.</summary>
+    /// <summary>How <see cref="Boot"/> starts the game, in Project Settings &gt; Core &gt; Boot. Preloaded, so it is there
+    /// before anything else loads. Its steps come from the features themselves (<see cref="BootStepAttribute"/>).</summary>
     [PreloadedSettings, SettingsMenu("Core/Boot")]
     public sealed class BootSettings : SettingsAsset<BootSettings>
     {
@@ -40,6 +40,9 @@ namespace Core.Bootstrap
         [Tooltip("Initializers taking longer than this in total log a warning - they delay every scene start.")]
         [Min(0f)] public float InitializerBudgetMs = 50f;
 
+        // Filled by the editor from [BootStep] types and kept sorted by their order (BootStepSync); the project only
+        // switches steps on and off, sets their fields and adds steps that don't add themselves.
+        [Header("Steps - added by [BootStep], switch off rather than remove")]
         [SerializeReference, SubclassPicker] public List<BootInitializer> Initializers = new();
         [SerializeReference, SubclassPicker] public List<BootService> Services = new();
         [SerializeReference, SubclassPicker] public List<SplashTask> SplashTasks = new();

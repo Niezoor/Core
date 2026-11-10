@@ -9,7 +9,7 @@ namespace Core.Bootstrap.Tasks
     /// Loads every <see cref="SettingsAsset"/> that is not [PreloadedSettings] (<see cref="SettingsRegistry.LoadAllAsync"/>).
     /// Without it - or another call to LoadAllAsync - reading those settings in a build throws.
     /// </summary>
-    [Serializable]
+    [Serializable, BootStep(Order = BootOrder.Settings)]
     public sealed class LoadSettingsTask : SplashTask
     {
         public override string DisplayName => "Load settings";

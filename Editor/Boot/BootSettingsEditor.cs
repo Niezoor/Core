@@ -6,7 +6,8 @@ using UnityEngine;
 
 namespace Core.Editor
 {
-    /// <summary>The default fields (so <c>[SubclassPicker]</c> draws the step lists) plus the boot scene's state.</summary>
+    /// <summary>The default fields (so <c>[SubclassPicker]</c> draws the step lists) plus the boot scene's state. Opening
+    /// it syncs the <c>[BootStep]</c> steps in.</summary>
     [CustomEditor(typeof(BootSettings))]
     internal sealed class BootSettingsEditor : UnityEditor.Editor
     {
@@ -18,7 +19,12 @@ namespace Core.Editor
         private bool hasAsyncSettings;
         private double refreshedAt = double.NegativeInfinity;
 
-        private void OnEnable() => Refresh();
+        private void OnEnable()
+        {
+            // Inspecting the asset shows it complete - also right after it was created, before any compile synced it.
+            if (!EditorApplication.isPlayingOrWillChangePlaymode) BootStepSync.Sync((BootSettings)target);
+            Refresh();
+        }
 
         public override void OnInspectorGUI()
         {
@@ -44,14 +50,15 @@ namespace Core.Editor
             var settings = (BootSettings)target;
             if (!hasAsyncSettings || settings.SplashTasks.Any(t => t is LoadSettingsTask { Enabled: true })) return;
 
-            EditorGUILayout.HelpBox("The project has settings that load asynchronously, but no Load Settings splash " +
-                                    "task: in a build reading them throws until SettingsRegistry.LoadAllAsync runs.",
-                MessageType.Warning);
-            if (GUILayout.Button("Add Load Settings Task"))
+            EditorGUILayout.HelpBox("The project has settings that load asynchronously, but the Load Settings splash " +
+                                    "task is switched off: in a build reading them throws until " +
+                                    "SettingsRegistry.LoadAllAsync runs.", MessageType.Warning);
+            if (GUILayout.Button("Enable Load Settings Task"))
             {
-                Undo.RecordObject(settings, "Add Load Settings Task");
-                settings.SplashTasks.Add(new LoadSettingsTask());
+                Undo.RecordObject(settings, "Enable Load Settings Task");
+                foreach (var task in settings.SplashTasks.OfType<LoadSettingsTask>()) task.Enabled = true;
                 EditorUtility.SetDirty(settings);
+                BootStepSync.Sync(settings);
             }
         }
 

@@ -156,8 +156,15 @@ UI System; tam też warianty UXML per `ScreenCondition`, PanelSettings, style gr
 ## Core.Bootstrap
 
 `Boot` startuje grę według `BootSettings` (Project Settings → Core → Boot; preloaded asset — bez niego bootstrap
-nic nie robi). Trzy fazy, każda to lista `[SerializeReference, SubclassPicker]` — gra dodaje własne kroki, pisząc
-klasę `[Serializable]`, bez zmian w Core:
+nic nie robi). Asset trzyma ustawienia samego Boota (`EntryScene`, `MinSplashDuration`, `AutoContinue`, budżet) i trzy
+fazy — listy `[SerializeReference, SubclassPicker]`, których **nie wypełnia się ręcznie**: ficzer oznacza swój krok
+`[BootStep(Order = BootOrder.Xyz)]` (klasa `[Serializable]` z konstruktorem bez parametrów), a `BootStepSync`
+(`Editor/Boot`: po kompilacji, przed Play, przed buildem, przy otwarciu inspektora, menu `Core/Boot/Sync Boot Steps`)
+dodaje brakujące typy z assembly playera (bez edytorowych i testowych) do fazy wynikającej z klasy bazowej i sortuje
+fazy po `Order` (stabilnie; krok bez atrybutu = `BootOrder.Default`). Projekt tylko przełącza `Enabled`/`Platforms`,
+ustawia pola kroków i dokłada ręcznie kroki `AutoAdd = false` (np. `PreloadAddressablesLabelTask`) — usunięty krok
+auto wraca przy następnym syncu. Logika scalania: `BootSteps.Merge` (runtime, `#if UNITY_EDITOR`, testowalna). Runtime
+nie używa refleksji — czyta listy z assetu. Gra dodaje własne kroki tak samo, bez zmian w Core:
 
 1. `BootInitializer` — synchronicznie w `BeforeSceneLoad`, **w każdej scenie** (też gameplay w edytorze). Tylko rzeczy
    szybkie, lokalne i synchroniczne na każdej platformie (lokalny zapis, ustawienia); suma ponad
@@ -166,8 +173,8 @@ klasę `[Serializable]`, bez zmian w Core:
 2. `BootService` — start w tle, nikt na nie nie czeka (auth, cloud, sklep, reklamy). Stan wystawiają same.
 3. `SplashTask` — asynchronicznie, **tylko w scenie z komponentem `BootScene`** (startuje je jego `Awake`), po kolei; `Required` (błąd → `SplashState.Failed`
    + `Boot.Retry()` wznawia od tego kroku) albo opcjonalne (log i dalej), `Timeout` liczony co klatkę. Ostatni,
-   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe: `InitializeAddressablesTask`, `LoadSettingsTask`
-   (ustawienia async — inspektor `BootSettings` ostrzega, gdy go brakuje), `PreloadAddressablesLabelTask`.
+   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe (same się dodają): `InitializeAddressablesTask`, `LoadSettingsTask`
+   (ustawienia async — inspektor `BootSettings` ostrzega, gdy jest wyłączony); ręcznie: `PreloadAddressablesLabelTask`.
    Initializery i synchroniczny start usług widzą tylko ustawienia `[PreloadedSettings]`.
 
 Scena startowa należy do gry (Animator, przycisk na cały ekran wołający `Boot.Continue()`, opcjonalnie

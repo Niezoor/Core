@@ -8,7 +8,7 @@ namespace Core.SaveSystem
     /// Loads the local save before the first scene, and tells the player through <see cref="Notices"/> when it was
     /// damaged or can't be written.
     /// </summary>
-    [Serializable]
+    [Serializable, BootStep(Order = BootOrder.Save)]
     public sealed class LoadSaveInitializer : BootInitializer
     {
         public const string ReadOnlyNoticeId = "core.save.read_only";

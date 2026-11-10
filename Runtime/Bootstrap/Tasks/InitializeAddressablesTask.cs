@@ -7,7 +7,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 namespace Core.Bootstrap.Tasks
 {
     /// <summary>Starts Addressables and, for remote content, brings the catalog up to date.</summary>
-    [Serializable]
+    [Serializable, BootStep(Order = BootOrder.Addressables)]
     public sealed class InitializeAddressablesTask : SplashTask
     {
         [Tooltip("Ask the content server for a newer catalog. A failure here never stops the game - the cached " +

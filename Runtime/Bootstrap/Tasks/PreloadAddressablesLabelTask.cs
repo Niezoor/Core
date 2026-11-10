@@ -11,7 +11,7 @@ namespace Core.Bootstrap.Tasks
     /// by default the "Settings" label of the old <c>ScriptableObjectSettings</c>. <c>SettingsAsset</c> types need
     /// <see cref="LoadSettingsTask"/> instead: only it hands them to <c>SettingsRegistry</c>.
     /// </summary>
-    [Serializable]
+    [Serializable, BootStep(Order = BootOrder.Settings, AutoAdd = false)]
     public sealed class PreloadAddressablesLabelTask : SplashTask
     {
         [SerializeField] private string label = "Settings";
