@@ -83,16 +83,17 @@ namespace Core.Editor
         private void DrawFirstSceneWarning()
         {
             var settings = (BootSettings)target;
-            if (!settings.FirstScene)
+            var scene = settings.StartScene;
+            if (!scene.IsSet)
             {
-                EditorGUILayout.HelpBox("No First Scene: the splash will finish loading and stay on screen.",
+                EditorGUILayout.HelpBox("No Entry Scene: the splash will finish loading and stay on screen.",
                     MessageType.Warning);
                 return;
             }
 
-            if (bootScenePath != null && settings.FirstScene.ScenePath == bootScenePath)
+            if (bootScenePath != null && scene.Path == bootScenePath)
             {
-                EditorGUILayout.HelpBox("First Scene is the boot scene itself - the splash would load itself again.",
+                EditorGUILayout.HelpBox("Entry Scene is the boot scene itself - the splash would load itself again.",
                     MessageType.Error);
             }
         }

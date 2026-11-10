@@ -12,7 +12,9 @@ using UnityEditor.AddressableAssets;
 
 namespace Core.Utilities
 {
-    [CreateAssetMenu(fileName = "SceneRef", menuName = "Core/Utilities/SceneRef")]
+    /// <summary>Legacy: a scene behind an asset of its own. Use a <see cref="SceneReference"/> field instead.</summary>
+    [System.Obsolete("Use a SceneReference field instead.")]
+    [CreateAssetMenu(fileName = "SceneRef", menuName = "Core/Utilities/SceneRef (Legacy)")]
     public class SceneRef : ScriptableObject, ISerializationCallbackReceiver
     {
 #if UNITY_EDITOR
@@ -25,6 +27,15 @@ namespace Core.Utilities
         public bool IsAddressable => isAddressable;
 
         private AsyncOperationHandle<SceneInstance> handle;
+
+        /// <summary>The same scene as a <see cref="SceneReference"/>, for code moved over to it.</summary>
+        public SceneReference ToReference()
+        {
+#if UNITY_EDITOR
+            if (sceneAsset) return new SceneReference { EditorAsset = sceneAsset };
+#endif
+            return SceneReference.FromPath(scenePath);
+        }
 
         public void LoadScene()
         {

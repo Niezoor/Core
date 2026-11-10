@@ -252,7 +252,7 @@ namespace Core.Editor
                                     typeof(Mesh).IsAssignableFrom(type) || type == typeof(GameObject));
         }
 
-        /// <summary>Everything an asset pulls into a build, without going into referenced scenes (a SceneRef).</summary>
+        /// <summary>Everything an asset pulls into a build, without going into referenced scenes (a SceneReference).</summary>
         private sealed class DependencyCache
         {
             private readonly Dictionary<string, string[]> direct = new();

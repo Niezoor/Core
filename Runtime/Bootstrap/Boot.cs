@@ -251,7 +251,7 @@ namespace Core.Bootstrap
             }
 
             // Last on purpose: a scene loaded without activation holds back every async load queued after it.
-            firstScene = new FirstSceneTask(Settings.FirstScene);
+            firstScene = new FirstSceneTask(Settings.StartScene);
             splashTasks.Add(firstScene);
 
             previousLoadingPriority = Application.backgroundLoadingPriority;
@@ -295,7 +295,7 @@ namespace Core.Bootstrap
                 SplashLeftAt = Time.realtimeSinceStartupAsDouble;
                 Debug.Log($"[Boot] Finished at {SplashLeftAt:0.00} s since launch - splash on screen " +
                           $"{SplashLeftAt - SplashStartedAt:0.00} s ({(continueRequested ? "continued by the player" : "minimum duration")}), " +
-                          $"entering {(Settings.FirstScene ? Settings.FirstScene.name : "nothing")}");
+                          $"entering {(Settings.StartScene.IsSet ? Settings.StartScene.Name : "nothing")}");
                 RestoreLoadingPriority();
                 splashSceneHandle = -1;
                 SetState(SplashState.None);
