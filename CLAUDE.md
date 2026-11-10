@@ -156,15 +156,16 @@ UI System; tam też warianty UXML per `ScreenCondition`, PanelSettings, style gr
 ## Core.Bootstrap
 
 `Boot` startuje grę według `BootSettings` (Project Settings → Core → Boot; preloaded asset — bez niego bootstrap
-nic nie robi). Asset trzyma ustawienia samego Boota (`EntryScene`, `MinSplashDuration`, `AutoContinue`, budżet) i trzy
-fazy — listy `[SerializeReference, SubclassPicker]`, których **nie wypełnia się ręcznie**: ficzer oznacza swój krok
-`[BootStep(Order = BootOrder.Xyz)]` (klasa `[Serializable]` z konstruktorem bez parametrów), a `BootStepSync`
-(`Editor/Boot`: po kompilacji, przed Play, przed buildem, przy otwarciu inspektora, menu `Core/Boot/Sync Boot Steps`)
-dodaje brakujące typy z assembly playera (bez edytorowych i testowych) do fazy wynikającej z klasy bazowej i sortuje
-fazy po `Order` (stabilnie; krok bez atrybutu = `BootOrder.Default`). Projekt tylko przełącza `Enabled`/`Platforms`,
-ustawia pola kroków i dokłada ręcznie kroki `AutoAdd = false` (np. `PreloadAddressablesLabelTask`) — usunięty krok
-auto wraca przy następnym syncu. Logika scalania: `BootSteps.Merge` (runtime, `#if UNITY_EDITOR`, testowalna). Runtime
-nie używa refleksji — czyta listy z assetu. Gra dodaje własne kroki tak samo, bez zmian w Core:
+nic nie robi). W ustawieniach edytuje się **tylko setup samego Boota** (`EntryScene`, `MinSplashDuration`,
+`AutoContinue`, budżet). Kroki i ich konfiguracja są w kodzie: ficzer oznacza krok
+`[BootStep(Order = BootOrder.Xyz, Platforms, Required, Timeout)]` (klasa `[Serializable]` z konstruktorem bez
+parametrów; faza wynika z klasy bazowej, przy równym `Order` decyduje pełna nazwa typu). `BootStepSync` (`Editor/Boot`:
+po kompilacji, przed Play, przed buildem, przy otwarciu inspektora, menu `Core/Boot/Sync Boot Steps`) zapisuje je z
+assembly playera (bez edytorowych i testowych) do ukrytych list `[SerializeReference, HideInInspector]` w assecie —
+wyłącznie z atrybutów: krok bez `[BootStep]` jest usuwany z ostrzeżeniem i nie uruchamia się. Inspektor pokazuje je
+tylko do odczytu. Krok, który w danym projekcie ma nic nie robić, sprawdza ustawienia swojego ficzera. Logika:
+`BootSteps.Merge` (runtime, `#if UNITY_EDITOR`, testowalna). Runtime nie używa refleksji — czyta listy z assetu. Gra
+dodaje własne kroki tak samo, bez zmian w Core:
 
 1. `BootInitializer` — synchronicznie w `BeforeSceneLoad`, **w każdej scenie** (też gameplay w edytorze). Tylko rzeczy
    szybkie, lokalne i synchroniczne na każdej platformie (lokalny zapis, ustawienia); suma ponad
@@ -173,8 +174,10 @@ nie używa refleksji — czyta listy z assetu. Gra dodaje własne kroki tak samo
 2. `BootService` — start w tle, nikt na nie nie czeka (auth, cloud, sklep, reklamy). Stan wystawiają same.
 3. `SplashTask` — asynchronicznie, **tylko w scenie z komponentem `BootScene`** (startuje je jego `Awake`), po kolei; `Required` (błąd → `SplashState.Failed`
    + `Boot.Retry()` wznawia od tego kroku) albo opcjonalne (log i dalej), `Timeout` liczony co klatkę. Ostatni,
-   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe (same się dodają): `InitializeAddressablesTask`, `LoadSettingsTask`
-   (ustawienia async — inspektor `BootSettings` ostrzega, gdy jest wyłączony); ręcznie: `PreloadAddressablesLabelTask`.
+   niejawny krok wczytuje `FirstScene` bez aktywacji. Gotowe: `InitializeAddressablesTask` (aktualizacja katalogu wg
+   ustawienia Addressables „Disable Catalog Update on Startup”), `LoadSettingsTask` (ustawienia async),
+   `PreloadAddressablesLabelTask` (stare `ScriptableObjectSettings` z labela `Settings`, bez `SettingsAsset`; inny label
+   — podklasa z własnym `[BootStep]` i nadpisanym `Label`).
    Initializery i synchroniczny start usług widzą tylko ustawienia `[PreloadedSettings]`.
 
 Scena startowa należy do gry (Animator, przycisk na cały ekran wołający `Boot.Continue()`, opcjonalnie

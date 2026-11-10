@@ -6,13 +6,14 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 
 namespace Core.Bootstrap.Tasks
 {
-    /// <summary>Starts Addressables and, for remote content, brings the catalog up to date.</summary>
+    /// <summary>
+    /// Starts Addressables, with progress. Whether it asks the content server for a newer catalog is the project's
+    /// Addressables setting "Disable Catalog Update on Startup" - a failed check falls back to the cached catalog.
+    /// </summary>
     [Serializable, BootStep(Order = BootOrder.Addressables)]
     public sealed class InitializeAddressablesTask : SplashTask
     {
-        [Tooltip("Ask the content server for a newer catalog. A failure here never stops the game - the cached " +
-                 "or built-in catalog is used.")]
-        [SerializeField] private bool updateCatalogs;
+        public override string DisplayName => "Initialize Addressables";
 
         public override async Awaitable RunAsync(SplashContext context, CancellationToken cancellationToken)
         {
@@ -25,40 +26,6 @@ namespace Core.Bootstrap.Tasks
             finally
             {
                 if (init.IsValid()) Addressables.Release(init);
-            }
-
-            if (updateCatalogs) await UpdateCatalogsAsync(context, cancellationToken);
-        }
-
-        private static async Awaitable UpdateCatalogsAsync(SplashContext context, CancellationToken cancellationToken)
-        {
-            context.ReportStatus("core.boot.checking_content");
-            var check = Addressables.CheckForCatalogUpdates(false);
-            try
-            {
-                await AddressablesAwait.CompletionAsync(check, null, cancellationToken);
-                if (check.Status != AsyncOperationStatus.Succeeded || check.Result == null || check.Result.Count == 0)
-                {
-                    if (check.Status != AsyncOperationStatus.Succeeded)
-                        Debug.LogWarning($"[Boot] Catalog check failed, using the cached catalog: {check.OperationException}");
-                    return;
-                }
-
-                var update = Addressables.UpdateCatalogs(check.Result, false);
-                try
-                {
-                    await AddressablesAwait.CompletionAsync(update, context, cancellationToken);
-                    if (update.Status != AsyncOperationStatus.Succeeded)
-                        Debug.LogWarning($"[Boot] Catalog update failed, using the cached catalog: {update.OperationException}");
-                }
-                finally
-                {
-                    if (update.IsValid()) Addressables.Release(update);
-                }
-            }
-            finally
-            {
-                if (check.IsValid()) Addressables.Release(check);
             }
         }
     }

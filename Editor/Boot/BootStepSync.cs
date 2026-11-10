@@ -10,9 +10,10 @@ using UnityEngine;
 namespace Core.Editor
 {
     /// <summary>
-    /// Keeps <see cref="BootSettings"/> in step with the <see cref="BootStepAttribute"/> types of the player
-    /// assemblies: adds the missing ones, sorts every phase. Runs after every compile, before Play, before a build,
-    /// when the asset is inspected and from Core &gt; Boot. A project without BootSettings is left alone.
+    /// Writes the <see cref="BootStepAttribute"/> types of the player assemblies into <see cref="BootSettings"/> -
+    /// the steps, their order and their configuration all come from code. Runs after every compile, before Play,
+    /// before a build, when the asset is inspected and from Core &gt; Boot. A project without BootSettings is left
+    /// alone.
     /// </summary>
     [InitializeOnLoad]
     public static class BootStepSync
@@ -59,12 +60,25 @@ namespace Core.Editor
         public static bool Sync(BootSettings settings)
         {
             var added = new List<string>();
-            if (!BootSteps.Merge(settings, Steps, added)) return false;
+            var removed = new List<string>();
+            var changed = BootSteps.Merge(settings, Steps, added, removed);
+
+            // A step whose class is gone (assembly removed, class renamed) left data nobody can load.
+            if (SerializationUtility.HasManagedReferencesWithMissingTypes(settings))
+            {
+                SerializationUtility.ClearAllManagedReferencesWithMissingTypes(settings);
+                changed = true;
+            }
+
+            if (!changed) return false;
 
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssetIfDirty(settings);
-            if (added.Count > 0)
-                Debug.Log($"[Boot] Added to {AssetDatabase.GetAssetPath(settings)}: {string.Join(", ", added)}", settings);
+            var path = AssetDatabase.GetAssetPath(settings);
+            if (added.Count > 0) Debug.Log($"[Boot] Steps added to {path}: {string.Join(", ", added)}", settings);
+            if (removed.Count > 0)
+                Debug.LogWarning($"[Boot] Steps removed from {path}, their classes have no [BootStep]: " +
+                                 $"{string.Join(", ", removed)}. Mark a class [BootStep] to run it again.", settings);
             return true;
         }
 

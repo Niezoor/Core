@@ -7,31 +7,29 @@ using UnityEngine;
 namespace Core.Bootstrap
 {
     /// <summary>
-    /// How the editor puts <see cref="BootStepAttribute"/> steps into <see cref="BootSettings"/>, apart from finding
-    /// the types (<c>Core.Editor.BootStepSync</c>), so tests can hand it types of their own.
+    /// How the editor writes the <see cref="BootStepAttribute"/> steps into <see cref="BootSettings"/>, apart from
+    /// finding the types (<c>Core.Editor.BootStepSync</c>), so tests can hand it types of their own.
     /// </summary>
     internal static class BootSteps
     {
         /// <summary>
-        /// Adds each auto-added step missing from its phase and sorts every phase by order. Steps already there are
-        /// kept as they are - their switches and fields are the project's.
+        /// Makes every phase exactly the steps of <paramref name="steps"/> for it, in order, configured by their
+        /// attributes. Instances already there are reused; anything else in the lists goes.
         /// </summary>
         /// <param name="steps">Step types and their attributes.</param>
         /// <param name="added">Receives the display names of the steps added.</param>
+        /// <param name="removed">Receives the display names of the steps dropped (no attribute any more).</param>
         /// <returns>Whether <paramref name="settings"/> changed.</returns>
         public static bool Merge(BootSettings settings, IReadOnlyDictionary<Type, BootStepAttribute> steps,
-            List<string> added)
+            List<string> added, List<string> removed)
         {
-            var changed = Merge(settings.Initializers, steps, added);
-            changed |= Merge(settings.Services, steps, added);
-            changed |= Merge(settings.SplashTasks, steps, added);
+            var changed = Merge(settings.Initializers, steps, added, removed);
+            changed |= Merge(settings.Services, steps, added, removed);
+            changed |= Merge(settings.SplashTasks, steps, added, removed);
             return changed;
         }
 
-        public static int OrderOf(object step, IReadOnlyDictionary<Type, BootStepAttribute> steps) =>
-            step != null && steps.TryGetValue(step.GetType(), out var attribute) ? attribute.Order : BootOrder.Default;
-
-        /// <summary>Why <paramref name="type"/> can't be added on its own; null when it can.</summary>
+        /// <summary>Why <paramref name="type"/> can't be a boot step; null when it can.</summary>
         public static string Problem(Type type)
         {
             if (!typeof(BootInitializer).IsAssignableFrom(type) && !typeof(BootService).IsAssignableFrom(type) &&
@@ -44,38 +42,61 @@ namespace Core.Bootstrap
         }
 
         private static bool Merge<T>(List<T> list, IReadOnlyDictionary<Type, BootStepAttribute> steps,
-            List<string> added) where T : BootEntry
+            List<string> added, List<string> removed) where T : BootEntry
         {
-            var changed = false;
-            var missing = steps
-                .Where(s => s.Value.AutoAdd && typeof(T).IsAssignableFrom(s.Key) &&
-                            !list.Any(e => e != null && e.GetType() == s.Key))
+            var wanted = steps
+                .Where(s => typeof(T).IsAssignableFrom(s.Key))
                 .OrderBy(s => s.Value.Order)
-                .ThenBy(s => s.Key.FullName, StringComparer.Ordinal)
-                .ToList();
+                .ThenBy(s => s.Key.FullName, StringComparer.Ordinal);
 
-            foreach (var step in missing)
+            var result = new List<T>();
+            foreach (var step in wanted)
             {
                 var problem = Problem(step.Key);
                 if (problem != null)
                 {
-                    Debug.LogWarning($"[Boot] {step.Key.FullName} has [BootStep] but {problem}; it is not added.");
+                    Debug.LogWarning($"[Boot] {step.Key.FullName} has [BootStep] but {problem}; it does not run.");
                     continue;
                 }
 
-                var instance = (T)Activator.CreateInstance(step.Key);
-                list.Add(instance);
-                added.Add(instance.DisplayName);
-                changed = true;
+                var instance = list.FirstOrDefault(e => e != null && e.GetType() == step.Key);
+                if (instance == null)
+                {
+                    instance = (T)Activator.CreateInstance(step.Key);
+                    added.Add(instance.DisplayName);
+                }
+
+                result.Add(instance);
             }
 
-            // OrderBy is stable: steps of equal order keep the order the project gave them.
-            var sorted = list.OrderBy(e => OrderOf(e, steps)).ToList();
-            if (sorted.SequenceEqual(list)) return changed;
+            foreach (var entry in list)
+            {
+                if (entry != null && !result.Contains(entry)) removed.Add(entry.DisplayName);
+            }
+
+            var changed = !result.SequenceEqual(list);
+            foreach (var entry in result) changed |= Configure(entry, steps[entry.GetType()]);
+            if (!changed) return false;
 
             list.Clear();
-            list.AddRange(sorted);
+            list.AddRange(result);
             return true;
+        }
+
+        private static bool Configure(BootEntry entry, BootStepAttribute attribute)
+        {
+            var changed = !entry.Enabled || entry.Platforms != attribute.Platforms;
+            entry.Enabled = true;
+            entry.Platforms = attribute.Platforms;
+
+            if (entry is SplashTask task)
+            {
+                changed |= task.Required != attribute.Required || !Mathf.Approximately(task.Timeout, attribute.Timeout);
+                task.Required = attribute.Required;
+                task.Timeout = attribute.Timeout;
+            }
+
+            return changed;
         }
     }
 }

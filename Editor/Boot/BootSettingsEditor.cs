@@ -1,12 +1,11 @@
 using System.Linq;
 using Core.Bootstrap;
-using Core.Bootstrap.Tasks;
 using UnityEditor;
 using UnityEngine;
 
 namespace Core.Editor
 {
-    /// <summary>The default fields (so <c>[SubclassPicker]</c> draws the step lists) plus the boot scene's state. Opening
+    /// <summary>The boot's own fields, the boot scene's state and, read only, the steps the features declared. Opening
     /// it syncs the <c>[BootStep]</c> steps in.</summary>
     [CustomEditor(typeof(BootSettings))]
     internal sealed class BootSettingsEditor : UnityEditor.Editor
@@ -14,9 +13,10 @@ namespace Core.Editor
         // The status reads scene files, so it is refreshed now and then rather than on every repaint.
         private const double RefreshInterval = 2.0;
 
+        private static bool showSteps;
+
         private BootSceneSetup.Status status;
         private string bootScenePath;
-        private bool hasAsyncSettings;
         private double refreshedAt = double.NegativeInfinity;
 
         private void OnEnable()
@@ -32,33 +32,48 @@ namespace Core.Editor
 
             DrawBootScene();
             DrawFirstSceneWarning();
-            DrawLoadSettingsWarning();
             if (GUILayout.Button("Open Boot Monitor")) BootMonitorWindow.Open();
             EditorGUILayout.Space();
             DrawDefaultInspector();
+            EditorGUILayout.Space();
+            DrawSteps();
         }
 
         private void Refresh()
         {
             status = BootSceneSetup.GetStatus(out bootScenePath);
-            hasAsyncSettings = SettingsAssetSync.HasAsyncAssets();
             refreshedAt = EditorApplication.timeSinceStartup;
         }
 
-        private void DrawLoadSettingsWarning()
+        /// <summary>Read only: what will run, as the features declared it with [BootStep].</summary>
+        private void DrawSteps()
         {
             var settings = (BootSettings)target;
-            if (!hasAsyncSettings || settings.SplashTasks.Any(t => t is LoadSettingsTask { Enabled: true })) return;
+            var count = settings.Initializers.Count + settings.Services.Count + settings.SplashTasks.Count;
+            showSteps = EditorGUILayout.Foldout(showSteps, $"Steps from [BootStep] ({count})", true);
+            if (!showSteps) return;
 
-            EditorGUILayout.HelpBox("The project has settings that load asynchronously, but the Load Settings splash " +
-                                    "task is switched off: in a build reading them throws until " +
-                                    "SettingsRegistry.LoadAllAsync runs.", MessageType.Warning);
-            if (GUILayout.Button("Enable Load Settings Task"))
+            var steps = BootStepSync.Steps;
+            using (new EditorGUI.IndentLevelScope())
             {
-                Undo.RecordObject(settings, "Enable Load Settings Task");
-                foreach (var task in settings.SplashTasks.OfType<LoadSettingsTask>()) task.Enabled = true;
-                EditorUtility.SetDirty(settings);
-                BootStepSync.Sync(settings);
+                DrawPhase("Initializers", settings.Initializers, steps);
+                DrawPhase("Services", settings.Services, steps);
+                DrawPhase("Splash tasks", settings.SplashTasks, steps);
+            }
+        }
+
+        private static void DrawPhase<T>(string title, System.Collections.Generic.List<T> entries,
+            System.Collections.Generic.IReadOnlyDictionary<System.Type, BootStepAttribute> steps) where T : BootEntry
+        {
+            EditorGUILayout.LabelField(title, EditorStyles.miniBoldLabel);
+            if (entries.Count == 0) EditorGUILayout.LabelField("-", EditorStyles.miniLabel);
+            foreach (var entry in entries.Where(e => e != null))
+            {
+                var order = steps.TryGetValue(entry.GetType(), out var attribute) ? attribute.Order : 0;
+                var details = entry.Platforms == BootPlatforms.All ? $"{order}" : $"{order}, {entry.Platforms}";
+                if (entry is SplashTask task && !task.Required) details += ", optional";
+                EditorGUILayout.LabelField(entry.DisplayName, $"{details}  ({entry.GetType().Assembly.GetName().Name})",
+                    EditorStyles.miniLabel);
             }
         }
 

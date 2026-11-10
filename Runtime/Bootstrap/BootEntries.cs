@@ -51,7 +51,8 @@ namespace Core.Bootstrap
             platforms == BootPlatforms.All || (platforms & platform) != 0;
     }
 
-    /// <summary>What every entry in <see cref="BootSettings"/> has: a switch and the platforms it runs on.</summary>
+    /// <summary>What every entry in <see cref="BootSettings"/> has: a switch and the platforms it runs on, written from
+    /// its <see cref="BootStepAttribute"/>.</summary>
     [Serializable]
     public abstract class BootEntry
     {

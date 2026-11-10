@@ -17,9 +17,8 @@ namespace Core.Bootstrap.Tests
     {
         [Serializable] private sealed class EarlyInitializer : BootInitializer { public override void Initialize() { } }
         [Serializable] private sealed class LateInitializer : BootInitializer { public override void Initialize() { } }
-        [Serializable] private sealed class ManualInitializer : BootInitializer { public override void Initialize() { } }
-        [Serializable] private sealed class PlainInitializer : BootInitializer { public override void Initialize() { } }
-        [Serializable] private sealed class OtherPlainInitializer : BootInitializer { public override void Initialize() { } }
+        [Serializable] private sealed class AInitializer : BootInitializer { public override void Initialize() { } }
+        [Serializable] private sealed class BInitializer : BootInitializer { public override void Initialize() { } }
 
         [Serializable]
         private sealed class NoDefaultConstructorInitializer : BootInitializer
@@ -41,32 +40,34 @@ namespace Core.Bootstrap.Tests
         }
 
         private readonly List<string> added = new();
+        private readonly List<string> removed = new();
         private BootSettings settings;
 
         [SetUp]
         public void SetUp()
         {
             added.Clear();
+            removed.Clear();
             settings = ScriptableObject.CreateInstance<BootSettings>();
         }
 
         [TearDown]
         public void TearDown() => UnityEngine.Object.DestroyImmediate(settings);
 
-        private static BootStepAttribute Step(int order, bool autoAdd = true) => new() { Order = order, AutoAdd = autoAdd };
+        private bool Merge(Dictionary<Type, BootStepAttribute> steps) => BootSteps.Merge(settings, steps, added, removed);
 
         [Test]
         public void AddsEachStepToItsPhaseInOrder()
         {
             var steps = new Dictionary<Type, BootStepAttribute>
             {
-                [typeof(LateInitializer)] = Step(10),
-                [typeof(EarlyInitializer)] = Step(-10),
-                [typeof(SomeService)] = Step(0),
-                [typeof(SomeTask)] = Step(0),
+                [typeof(LateInitializer)] = new() { Order = 10 },
+                [typeof(EarlyInitializer)] = new() { Order = -10 },
+                [typeof(SomeService)] = new(),
+                [typeof(SomeTask)] = new(),
             };
 
-            Assert.IsTrue(BootSteps.Merge(settings, steps, added));
+            Assert.IsTrue(Merge(steps));
 
             Assert.AreEqual(2, settings.Initializers.Count);
             Assert.IsInstanceOf<EarlyInitializer>(settings.Initializers[0]);
@@ -77,62 +78,76 @@ namespace Core.Bootstrap.Tests
         }
 
         [Test]
-        public void KeepsTheProjectsInstanceAndChangesNothingTheSecondTime()
+        public void EqualOrdersGoByTypeName()
         {
-            var existing = new EarlyInitializer { Enabled = false };
-            settings.Initializers.Add(existing);
-            var steps = new Dictionary<Type, BootStepAttribute> { [typeof(EarlyInitializer)] = Step(0) };
+            var steps = new Dictionary<Type, BootStepAttribute>
+            {
+                [typeof(BInitializer)] = new(),
+                [typeof(AInitializer)] = new(),
+            };
 
-            Assert.IsFalse(BootSteps.Merge(settings, steps, added));
+            Merge(steps);
 
-            Assert.AreEqual(1, settings.Initializers.Count);
-            Assert.AreSame(existing, settings.Initializers[0]);
-            Assert.IsFalse(existing.Enabled);
+            Assert.IsInstanceOf<AInitializer>(settings.Initializers[0]);
+            Assert.IsInstanceOf<BInitializer>(settings.Initializers[1]);
+        }
+
+        [Test]
+        public void ReusesTheInstanceAndChangesNothingTheSecondTime()
+        {
+            var steps = new Dictionary<Type, BootStepAttribute> { [typeof(EarlyInitializer)] = new() };
+            Merge(steps);
+            var instance = settings.Initializers[0];
+            added.Clear();
+
+            Assert.IsFalse(Merge(steps));
+
+            Assert.AreSame(instance, settings.Initializers[0]);
             CollectionAssert.IsEmpty(added);
         }
 
         [Test]
-        public void StepNotAutoAddedIsOnlySorted()
+        public void ConfigurationComesFromTheAttribute()
         {
-            var plain = new PlainInitializer();
-            var manual = new ManualInitializer();
-            settings.Initializers.Add(plain);
-            settings.Initializers.Add(manual);
+            settings.Initializers.Add(new EarlyInitializer { Enabled = false });
+            settings.SplashTasks.Add(new SomeTask());
             var steps = new Dictionary<Type, BootStepAttribute>
             {
-                [typeof(ManualInitializer)] = Step(-5, autoAdd: false),
-                [typeof(EarlyInitializer)] = Step(-10),
+                [typeof(EarlyInitializer)] = new() { Platforms = BootPlatforms.Mobile },
+                [typeof(SomeTask)] = new() { Required = false, Timeout = 5f },
             };
 
-            Assert.IsTrue(BootSteps.Merge(settings, steps, added));
+            Assert.IsTrue(Merge(steps));
 
-            Assert.AreEqual(3, settings.Initializers.Count);
-            Assert.IsInstanceOf<EarlyInitializer>(settings.Initializers[0]);
-            Assert.AreSame(manual, settings.Initializers[1]);
-            Assert.AreSame(plain, settings.Initializers[2]);
+            Assert.IsTrue(settings.Initializers[0].Enabled);
+            Assert.AreEqual(BootPlatforms.Mobile, settings.Initializers[0].Platforms);
+            Assert.IsFalse(settings.SplashTasks[0].Required);
+            Assert.AreEqual(5f, settings.SplashTasks[0].Timeout);
         }
 
         [Test]
-        public void EqualOrdersKeepTheProjectsOrder()
+        public void StepsWithoutTheAttributeAndEmptyEntriesAreRemoved()
         {
-            var second = new OtherPlainInitializer();
-            var first = new PlainInitializer();
-            settings.Initializers.Add(second);
+            settings.Initializers.Add(new AInitializer());
             settings.Initializers.Add(null);
-            settings.Initializers.Add(first);
+            settings.Initializers.Add(new EarlyInitializer());
+            settings.Initializers.Add(new EarlyInitializer());
+            var steps = new Dictionary<Type, BootStepAttribute> { [typeof(EarlyInitializer)] = new() };
 
-            Assert.IsFalse(BootSteps.Merge(settings, new Dictionary<Type, BootStepAttribute>(), added));
+            Assert.IsTrue(Merge(steps));
 
-            CollectionAssert.AreEqual(new BootInitializer[] { second, null, first }, settings.Initializers);
+            Assert.AreEqual(1, settings.Initializers.Count);
+            Assert.IsInstanceOf<EarlyInitializer>(settings.Initializers[0]);
+            CollectionAssert.AreEquivalent(new[] { nameof(AInitializer), nameof(EarlyInitializer) }, removed);
         }
 
         [Test]
         public void StepThatCantBeCreatedIsSkippedWithAWarning()
         {
-            var steps = new Dictionary<Type, BootStepAttribute> { [typeof(NoDefaultConstructorInitializer)] = Step(0) };
+            var steps = new Dictionary<Type, BootStepAttribute> { [typeof(NoDefaultConstructorInitializer)] = new() };
 
             LogAssert.Expect(LogType.Warning, new Regex("NoDefaultConstructorInitializer.*parameterless constructor"));
-            Assert.IsFalse(BootSteps.Merge(settings, steps, added));
+            Assert.IsFalse(Merge(steps));
 
             CollectionAssert.IsEmpty(settings.Initializers);
         }
