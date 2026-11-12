@@ -6,17 +6,15 @@ using Core.Bootstrap;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
-using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace Core.Editor
 {
     /// <summary>
-    /// Keeps the scene holding <see cref="BootScene"/> first in Build Settings, creating it when the project has none.
-    /// Does nothing in a project without <see cref="BootSettings"/>. Checked before Play (fixing what it can, never
-    /// blocking Play), before a build (stopping it) and from Core &gt; Boot &gt; Setup Boot Scene - never on compile,
-    /// so writing code never creates scenes.
+    /// Keeps the scene holding <see cref="BootScene"/> first in Build Settings. Never creates a scene on its own: a
+    /// missing one is reported in the BootSettings inspector, where it can be added to a chosen location, and fails
+    /// the build. Play Mode doesn't check anything - a gameplay scene runs without the boot scene. Does nothing in a
+    /// project without <see cref="BootSettings"/>.
     /// </summary>
     public static class BootSceneSetup
     {
@@ -24,9 +22,6 @@ namespace Core.Editor
 
         // Editor/Boot/BootSceneTemplate.unity.meta
         private const string TemplateGuid = "24b92c9007aa42128019b7b68da13df8";
-
-        /// <summary>Scene names that may already be a boot scene of an older setup, compared case-insensitively.</summary>
-        private static readonly string[] CandidateNames = { "Boot", "Launcher", "Loader" };
 
         public enum Status
         {
@@ -38,15 +33,8 @@ namespace Core.Editor
             Missing,
         }
 
-        [InitializeOnLoadMethod]
-        private static void HookPlayMode()
-        {
-            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
-            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-        }
-
-        [MenuItem("Core/Boot/Setup Boot Scene")]
-        private static void SetupFromMenu()
+        [MenuItem("Core/Boot/Add Boot Scene...")]
+        private static void AddFromMenu()
         {
             if (!BootSettings.TryGet(out _))
             {
@@ -54,17 +42,9 @@ namespace Core.Editor
                 _ = BootSettings.Instance;
             }
 
-            if (Ensure(true, out var message)) Debug.Log($"[Boot] {message}");
-            else Debug.LogError($"[Boot] {message}");
-        }
-
-        private static void OnPlayModeStateChanged(PlayModeStateChange change)
-        {
-            if (change != PlayModeStateChange.ExitingEditMode) return;
-
-            // Play goes on either way: a gameplay scene runs without the boot scene, and the test runner enters Play
-            // from scenes of its own. The build check is what stops a broken setup from shipping.
-            if (!Ensure(!Application.isBatchMode, out var message)) Debug.LogError($"[Boot] {message}");
+            var done = GetStatus(out _) == Status.Missing ? AddBootScene(out var message) : FixOrder(out message);
+            if (done) Debug.Log($"[Boot] {message}");
+            else Debug.LogWarning($"[Boot] {message}");
         }
 
         /// <summary>Where the project stands, without changing anything.</summary>
@@ -84,63 +64,47 @@ namespace Core.Editor
             return bootScenePath != null ? Status.NotFirst : Status.Missing;
         }
 
-        /// <summary>
-        /// Makes the boot scene the first enabled scene in Build Settings, moving, marking or creating one as needed.
-        /// </summary>
-        /// <param name="interactive">May ask before turning an existing Boot/Launcher/Loader scene into the boot
-        /// scene; without asking such a scene is left alone and this fails.</param>
-        /// <returns>False when it could not, or the user cancelled; <paramref name="message"/> says why.</returns>
-        public static bool Ensure(bool interactive, out string message)
+        /// <summary>Moves an existing boot scene to the top of Build Settings. False when there is none.</summary>
+        public static bool FixOrder(out string message)
         {
             switch (GetStatus(out var path))
             {
-                case Status.NotUsed:
-                    message = "The project has no BootSettings; nothing to set up.";
+                case Status.NotFirst:
+                    MoveToFront(path);
+                    message = $"Moved {path} to the top of Build Settings - it is the boot scene.";
                     return true;
                 case Status.Ok:
                     message = $"{path} is the boot scene.";
                     return true;
-                case Status.NotFirst:
-                    MoveToFront(path);
-                    message = $"Moved {path} to the top of Build Settings - it is the boot scene.";
-                    Debug.Log($"[Boot] {message}");
+                case Status.NotUsed:
+                    message = "The project has no BootSettings; nothing to set up.";
                     return true;
-            }
-
-            var candidate = FindCandidateScene();
-            if (candidate != null)
-            {
-                if (!interactive)
-                {
-                    message = $"Build Settings has no boot scene. {candidate} looks like one but has no BootScene " +
-                              "component - add it (or run Core > Boot > Setup Boot Scene) and build again.";
+                default:
+                    message = "No scene has a BootScene component.";
                     return false;
-                }
+            }
+        }
 
-                var choice = EditorUtility.DisplayDialogComplex("Boot scene",
-                    $"The project has no scene with a BootScene component, but {candidate} looks like a boot scene.\n\n" +
-                    "Use it? A BootScene object is added to it and it goes first in Build Settings. Check that " +
-                    "nothing else in it loads the next scene - Boot does that now.",
-                    $"Use {Path.GetFileNameWithoutExtension(candidate)}", "Cancel", "Create a new Boot scene");
-
-                switch (choice)
-                {
-                    case 0:
-                        if (!AddMarker(candidate, out message)) return false;
-                        MoveToFront(candidate);
-                        message = $"Added BootScene to {candidate} and made it the boot scene.";
-                        Debug.Log($"[Boot] {message}");
-                        return true;
-                    case 1:
-                        message = "Boot scene setup cancelled.";
-                        return false;
-                }
+        /// <summary>
+        /// Asks where to put a new boot scene (a copy of the package's template), creates it and puts it first in
+        /// Build Settings. False when cancelled or it could not be created; <paramref name="message"/> says what happened.
+        /// </summary>
+        public static bool AddBootScene(out string message)
+        {
+            var folder = Path.GetDirectoryName(DefaultScenePath)?.Replace('\\', '/');
+            var initial = !string.IsNullOrEmpty(folder) && AssetDatabase.IsValidFolder(folder) ? folder : "Assets";
+            var path = EditorUtility.SaveFilePanelInProject("Add Boot Scene",
+                Path.GetFileNameWithoutExtension(DefaultScenePath), "unity",
+                "Where to create the boot scene (a camera and the BootScene component).", initial);
+            if (string.IsNullOrEmpty(path))
+            {
+                message = "Adding the boot scene was cancelled.";
+                return false;
             }
 
-            if (!CreateBootScene(out var created, out message)) return false;
-            MoveToFront(created);
-            message = $"Created {created} as the boot scene and put it first in Build Settings.";
-            Debug.Log($"[Boot] {message}");
+            if (!CreateBootScene(path, out message)) return false;
+            MoveToFront(path);
+            message = $"Created {path} as the boot scene and put it first in Build Settings.";
             return true;
         }
 
@@ -169,16 +133,6 @@ namespace Core.Editor
             return buildScenes.Concat(projectScenes).Distinct().Where(p => p != template && HasMarker(p));
         }
 
-        private static string FindCandidateScene()
-        {
-            var buildScenes = EditorBuildSettings.scenes.Select(s => s.path);
-            var projectScenes = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" }).Select(AssetDatabase.GUIDToAssetPath);
-            return buildScenes.Concat(projectScenes).Distinct()
-                .Where(File.Exists)
-                .FirstOrDefault(p => CandidateNames.Any(n =>
-                    string.Equals(Path.GetFileNameWithoutExtension(p), n, StringComparison.OrdinalIgnoreCase)));
-        }
-
         private static void MoveToFront(string scenePath)
         {
             var scenes = EditorBuildSettings.scenes.Where(s => s.path != scenePath).ToList();
@@ -186,45 +140,12 @@ namespace Core.Editor
             EditorBuildSettings.scenes = scenes.ToArray();
         }
 
-        private static bool AddMarker(string scenePath, out string message)
-        {
-            var scene = SceneManager.GetSceneByPath(scenePath);
-            var openedHere = !scene.isLoaded;
-            try
-            {
-                if (openedHere) scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Additive);
-
-                var host = new GameObject("[Boot]");
-                SceneManager.MoveGameObjectToScene(host, scene);
-                host.AddComponent<BootScene>();
-
-                if (!EditorSceneManager.SaveScene(scene))
-                {
-                    message = $"Could not save {scenePath}.";
-                    return false;
-                }
-
-                message = null;
-                return true;
-            }
-            catch (Exception exception)
-            {
-                message = $"Could not add BootScene to {scenePath}: {exception.Message}";
-                return false;
-            }
-            finally
-            {
-                if (openedHere && scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true);
-            }
-        }
-
         /// <summary>
         /// Copies the package's template (a camera and the BootScene marker) rather than building a scene in the
         /// editor, which Unity refuses while an untitled scene is open - the usual state of a fresh project.
         /// </summary>
-        private static bool CreateBootScene(out string path, out string message)
+        private static bool CreateBootScene(string path, out string message)
         {
-            path = AssetDatabase.GenerateUniqueAssetPath(DefaultScenePath);
             var template = AssetDatabase.GUIDToAssetPath(TemplateGuid);
             if (string.IsNullOrEmpty(template))
             {
@@ -240,10 +161,10 @@ namespace Core.Editor
                 return false;
             }
 
-            var folder = Path.GetDirectoryName(path)?.Replace('\\', '/');
-            if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder))
+            if (File.Exists(path))
             {
-                AssetDatabase.CreateFolder((Path.GetDirectoryName(folder) ?? "Assets").Replace('\\', '/'), Path.GetFileName(folder));
+                message = $"{path} already exists - pick another file name.";
+                return false;
             }
 
             if (!AssetDatabase.CopyAsset(template, path))
@@ -257,10 +178,7 @@ namespace Core.Editor
         }
     }
 
-    /// <summary>
-    /// The build's scene list is fixed before this runs, so a missing boot scene is set up and the build stopped,
-    /// to be started again with it.
-    /// </summary>
+    /// <summary>A build without a boot scene fails; one that is only out of order is fixed and the build restarted.</summary>
     internal sealed class BootSceneBuildCheck : IPreprocessBuildWithReport
     {
         public int callbackOrder => -1000;
@@ -270,10 +188,16 @@ namespace Core.Editor
             var status = BootSceneSetup.GetStatus(out _);
             if (status is BootSceneSetup.Status.NotUsed or BootSceneSetup.Status.Ok) return;
 
-            var fixedIt = BootSceneSetup.Ensure(!Application.isBatchMode, out var message);
-            throw new BuildFailedException(fixedIt
-                ? $"[Boot] The boot scene was not first in Build Settings. {message} Start the build again."
-                : $"[Boot] {message}");
+            if (status == BootSceneSetup.Status.Missing)
+            {
+                throw new BuildFailedException("[Boot] The project has no boot scene (a scene with a BootScene " +
+                                               "component). Add one in Project Settings > Core > Boot or with " +
+                                               "Core > Boot > Add Boot Scene.");
+            }
+
+            // The build's scene list is fixed before this runs, so fixing the order means starting the build again.
+            BootSceneSetup.FixOrder(out var message);
+            throw new BuildFailedException($"[Boot] The boot scene was not first in Build Settings. {message} Start the build again.");
         }
     }
 }

@@ -89,15 +89,18 @@ namespace Core.Editor
                         MessageType.Warning);
                     break;
                 case BootSceneSetup.Status.Missing:
-                    EditorGUILayout.HelpBox("No scene has a BootScene component. It is set up when you press Play " +
-                                            "or build, or now:", MessageType.Warning);
+                    EditorGUILayout.HelpBox("No scene has a BootScene component. Play still works, but a build " +
+                                            "fails without a boot scene.", MessageType.Warning);
                     break;
                 default:
                     return;
             }
 
-            if (!GUILayout.Button("Setup Boot Scene")) return;
-            if (!BootSceneSetup.Ensure(true, out var message)) Debug.LogError($"[Boot] {message}");
+            var missing = status == BootSceneSetup.Status.Missing;
+            if (!GUILayout.Button(missing ? "Add Boot Scene..." : "Move to Top of Build Settings")) return;
+            var done = missing ? BootSceneSetup.AddBootScene(out var message) : BootSceneSetup.FixOrder(out message);
+            if (done) Debug.Log($"[Boot] {message}");
+            else Debug.LogWarning($"[Boot] {message}");
             Refresh();
             GUIUtility.ExitGUI();
         }

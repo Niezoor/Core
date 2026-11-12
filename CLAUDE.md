@@ -182,11 +182,12 @@ dodaje własne kroki tak samo, bez zmian w Core:
 
 Scena startowa należy do gry (Animator, przycisk na cały ekran wołający `Boot.Continue()`, opcjonalnie
 `BootProgressView` z `Core.UI`) + znacznik `BootScene`. `BootSceneSetup` (`Editor/Boot`) pilnuje, żeby była pierwsza
-w Build Settings — tylko gdy projekt ma `BootSettings`: przed Play (naprawia, nie blokuje), przed buildem (przerywa
-build, jeśli musiał coś zmienić — lista scen buildu jest już ustalona) i z menu `Core/Boot/Setup Boot Scene`.
-Kolejność: scena 0 ze znacznikiem → inna scena ze znacznikiem na początek → scena `Boot`/`Launcher`/`Loader` bez
-znacznika tylko po potwierdzeniu w okienku → kopia szablonu `Editor/Boot/BootSceneTemplate.unity` do
-`Assets/Scenes/Boot.unity` (kopia, bo Unity nie tworzy sceny addytywnie przy otwartej niezapisanej scenie).
+w Build Settings — tylko gdy projekt ma `BootSettings`. **Nigdy nie tworzy sceny sam i nie sprawdza nic przy Play**
+(edytor bez sceny Boot uruchamia grę normalnie). Brak sceny: ostrzeżenie w inspektorze `BootSettings` z przyciskiem
+„Add Boot Scene...” (pyta o lokalizację pliku; kopia szablonu `Editor/Boot/BootSceneTemplate.unity`, bo Unity nie
+tworzy sceny addytywnie przy otwartej niezapisanej scenie) i menu `Core/Boot/Add Boot Scene...`; **build kończy się
+błędem** (`BootSceneBuildCheck`). Scena ze znacznikiem, ale nie pierwsza: przycisk „Move to Top of Build Settings”,
+a build przerywa się po naprawie kolejności (lista scen buildu jest już ustalona).
 Znacznik wykrywany po GUID skryptu `BootScene` w pliku `.unity` (stały GUID w `BootScene.cs.meta` — nie zmieniać,
 szablon go używa). Wyjście ze splasha: `Boot.Continue()` (od razu, gdy
 gotowe; tap w trakcie ładowania jest zapamiętany) albo samo po `MinSplashDuration`, jeśli `AutoContinue`.
